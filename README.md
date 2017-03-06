@@ -21,14 +21,13 @@ Question Answering
 
   Example:
 
- 	python3   
+	import ner
 
-	  ```python
-	  	import ner
+	# Create an instance of the sample sentence
+	sentence = ner.NER("Abraham Lincoln was born in Hodgenville, Kentucky.")
 
-	  	sentence = ner.NER("Abraham Lincoln was born in Hodgenville, Kentucky.")
+	# Prints the sentence along with its part-of-speech tags and named entities
+	sentence.printTag()  
 
-	  	sentence.printTag()  # Prints the sentence along with its part-of-speech tags and named entities
-
-	  	sentence.drawTree()  # Draws the corresponding tree of the tagged sentence
-	  ```
+	# Draws the corresponding tree of the tagged sentence
+	sentence.drawTree()  
