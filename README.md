@@ -14,6 +14,20 @@ Question Answering
 ## txt_ner.py
   Specific to the txt files in the data set
 
+  Example:
+
+	import txt_ner
+
+	# Create an instance of the desired txt file
+	txt = txt_ner.NER("set1/a1.txt")
+
+	# Prints the ith sentence along with its part-of-speech tags and named entities
+	sentence.printTag(i)  
+
+	# Draws the corresponding tree of the tagged sentence
+	sentence.drawTree(i)  
+
+
 ## ner.py
   Tags and chunks generic sentence
 
