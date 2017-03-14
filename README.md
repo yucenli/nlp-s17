@@ -22,10 +22,10 @@ Question Answering
 	txt = txt_ner.NER("set1/a1.txt")
 
 	# Prints the ith sentence along with its part-of-speech tags and named entities
-	sentence.printTag(i)  
+	txt.printTag(i)  
 
 	# Draws the corresponding tree of the tagged sentence
-	sentence.drawTree(i)  
+	txt.drawTree(i)  
 
 
 ## ner.py
@@ -38,7 +38,7 @@ Question Answering
 	import ner
 
 	# Create an instance of the sample sentence
-	sentence = ner.NER("Abraham Lincoln was born in Hodgenville, Kentucky.")
+	sentence = ner.NER("Abraham Lincoln was born in Hodgenville Kentucky.")
 
 	# Prints the sentence along with its part-of-speech tags and named entities
 	sentence.printTag()  
