@@ -6,8 +6,8 @@ class NER(object):
     def __init__(self, sentence):
         super(NER, self).__init__()
         self.sentence = sentence
-
-        ne_tree = nltk.chunk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sentence)))
+        self.tokens = nltk.word_tokenize(sentence)
+        ne_tree = nltk.chunk.ne_chunk(nltk.pos_tag(self.tokens))
         iob_tagged = nltk.chunk.tree2conlltags(ne_tree)
 
         self.tagged_sentence = iob_tagged

@@ -19,24 +19,38 @@ class NER(object):
         txt = list(filter(None, txt))
         self.txt = txt
 
-        sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
-        regex = re.compile(sentence_regex)
+        # Only grab complete sentences
+        regex = re.compile(r'([A-Z][^\.!?]*[\.!?])', re.M)
 
         sentences = [x for x in txt if regex.search(x)]
         all_sentences = []
+
+        # Pattern for splitting sentences
+        sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
         for sentence in sentences:
             all_sentences += re.split(sentence_regex, sentence)
 
         self.sentences = all_sentences
 
+        tokens = []
         tagged_sentences = []
 
         for sentence in self.sentences:
-            ne_tree = nltk.chunk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sentence)))
+            # Remove anything in between parentheses, slashes, ...
+            sentence = re.sub('\(([^\)]+)\)|\/([^\)]+)\/', '', sentence)
+            # Get rid of punctuation
+            tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+')
+            token = tokenizer.tokenize(sentence)
+            tokens.append(token)
+            ne_tree = nltk.chunk.ne_chunk(nltk.pos_tag(token))
             iob_tagged = nltk.chunk.tree2conlltags(ne_tree)
             tagged_sentences.append(iob_tagged)
 
         self.tagged_sentences = tagged_sentences
+        self.tokens = tokens
+
+    def printSentence(self, i):
+        print(self.sentences[i])
 
     def printTag(self, i):
         print(self.tagged_sentences[i])
