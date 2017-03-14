@@ -21,6 +21,9 @@ Question Answering
 	# Create an instance of the desired txt file
 	txt = txt_ner.NER("set1/a1.txt")
 
+	# Prints the ith sentence as it is
+	txt.printSentence(i)
+
 	# Prints the ith sentence along with its part-of-speech tags and named entities
 	txt.printTag(i)  
 
