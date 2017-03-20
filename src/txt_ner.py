@@ -3,6 +3,22 @@ import os
 import re
 
 
+def removeParentheses(sentence):
+    pCounter = 0
+    newSentence = ""
+    for i in range(len(sentence)):
+        if (sentence[i] == '(' or sentence[i] == '{'):
+            pCounter += 1
+        if (sentence[i] == ')' or sentence[i] == '}'):
+            pCounter -= 1
+        if (not(sentence[i] == '(' or sentence[i] == '{' or
+                sentence[i] == ')' or sentence[i] == '}') and pCounter == 0):
+            newSentence += sentence[i]
+    # Remove anything in slashes
+    newSentence = re.sub('\/([^\)]+)\/', '', newSentence)
+    return newSentence
+
+
 class NER(object):
 
     def __init__(self, txt_path):
@@ -28,6 +44,8 @@ class NER(object):
         # Pattern for splitting sentences
         sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
         for sentence in sentences:
+            # Remove anything in between parenthesis, slashs, brackets,...
+            sentence = removeParentheses(sentence)
             all_sentences += re.split(sentence_regex, sentence)
 
         self.sentences = all_sentences
@@ -36,11 +54,10 @@ class NER(object):
         tagged_sentences = []
 
         for sentence in self.sentences:
-            # Remove anything in between parentheses, slashes, ...
-            sentence = re.sub('\(([^\)]+)\)|\/([^\)]+)\/', '', sentence)
             # Get rid of punctuation
-            tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+')
-            token = tokenizer.tokenize(sentence)
+            # tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+')
+            # token = tokenizer.tokenize(sentence)
+            token = nltk.word_tokenize(sentence)
             tokens.append(token)
             ne_tree = nltk.chunk.ne_chunk(nltk.pos_tag(token))
             iob_tagged = nltk.chunk.tree2conlltags(ne_tree)
