@@ -49,6 +49,61 @@ class NER(object):
         self.tagged_sentences = tagged_sentences
         self.tokens = tokens
 
+    def basicWho(self, i):
+        tagged = self.tagged_sentences[i]
+        people = []
+        person = ""
+        for word in tagged:
+            if word[2] == "B-PERSON":
+                if person != "":
+                    people.append(person)
+                person = word[0]
+            elif word[2] == "I-PERSON":
+                person += " " + word[0]
+            elif person != "":
+                people.append(person)
+                person = ""
+        if person != "":
+            people.append(person)
+        for person in people:
+            print("Who is " + person + "?")
+
+    def basicLocation(self, i):
+        tagged = self.tagged_sentences[i]
+        places = []
+        place = ""
+        for word in tagged:
+            if word[2] == "B-GPE":
+                place = word[0]
+            elif word[2] == "I-GPE":
+                place += " " + word[0]
+            elif place != "":
+                places.append(place)
+                place = ""
+        if place != "":
+            places.append(place)
+        for place in places:
+            print("What happened in " + place + "?")
+
+    def basicWhat(self, i):
+        tagged = self.tagged_sentences[i]
+        orgs = []
+        org = ""
+        for word in tagged:
+            if word[2] == "B-ORGANIZATION":
+                print(word)
+                org = word[0]
+            elif word[2] == "I-ORGANIZATION":
+                org += " " + word[0]
+                print(org)
+            elif org != "":
+                orgs.append(org)
+                org = ""
+        if org != "":
+            orgs.append(org)
+        for org in orgs:
+            print("What is " + org + "?")
+
     def printSentence(self, i):
         print(self.sentences[i])
 
@@ -58,3 +113,11 @@ class NER(object):
     def drawTree(self, i):
         ne_tree = nltk.chunk.conlltags2tree(self.tagged_sentences[i])
         ne_tree.draw()
+
+txt = NER("set5/a3.txt")
+s = 10
+txt.printSentence(s)
+txt.printTag(s)
+txt.basicWho(s)
+txt.basicWhat(s)
+txt.basicLocation(s)
