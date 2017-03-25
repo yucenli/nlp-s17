@@ -131,7 +131,7 @@ class NER(object):
         ne_tree = nltk.chunk.conlltags2tree(self.tagged_sentences[i])
         ne_tree.draw()
 
-txt = NER("set5/a3.txt")
+txt = NER("set1/a3.txt")
 s = 10
 txt.printSentence(s)
 txt.printTag(s)
