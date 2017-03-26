@@ -1,44 +1,33 @@
 from __future__ import unicode_literals
 
 import spacy
+from nltk import Tree
 from spacy.en import English
 parser = English()
 
-multiSentence = "Aquarius is a constellation of the zodiac, situated between Capricornus and Pisces." \
-        "Aquarius is one of the oldest of the recognized constellations along the zodiac" \
-        " It was one of the 48 constellations listed by the 2nd century astronomer Ptolemy, and it remains one of the 88 modern constellations."
-        
+sentence = "One of Dempsey's passions outside of soccer is hip-hop"
 
-parsedData = parser(multiSentence)
-sents = []
+doc = parser(sentence)
+for sent in doc.sents:
+    print sent.root
+    if (sent.root.lemma_ == "be"):
+        print sent
+        for r in sent.root.rights:
+            print "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+            break
+        right = ""
+        for r in sent.root.lefts:
+            right = "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+        print right
 
-for span in parsedData.sents:
-    sent = ''.join(parsedData[i].string for i in range(span.start, span.end)).strip()
-    sents.append(sent)
+def tok_format(tok):
+    return "_".join([tok.orth_, tok.tag_])
 
-for sentence in sents:
-    print(sentence)
+def to_nltk_tree(node):
+    if node.n_lefts + node.n_rights > 0:
+        return Tree(tok_format(node), [to_nltk_tree(child) for child in node.children])
+    else:
+        return tok_format(node)
 
-for span in parsedData.sents:
-    sent = [parsedData[i] for i in range(span.start,span.end)]
-    break
-
-# POS tagging
-for token in sent:
-    print(token.orth_, token.pos_)
-
-# dependencies
-for token in parsedData:
-    print(token.orth_, token.dep_, token.head.orth_, [t.orth_ for t in token.lefts], [t.orth_ for t in token.rights])
-
-# NER
-example = "English is a West Germanic language that was first spoken in early medieval England and is now the global lingua franca."
-example = "The English man walked down the street."
-parsedEx = parser(example)
-
-# if you just want the entities and nothing else, you can do access the parsed examples "ents" property like this:
-ents = list(parsedEx.ents)
-print("entities!")
-for entity in ents:
-    print(entity.label, entity.label_, ' '.join(t.orth_ for t in entity))
+[to_nltk_tree(sent.root).pretty_print() for sent in doc.sents]
 
