@@ -1,8 +1,11 @@
-import nltk
+import spacy
 import os
 import re
+import sys  
+import string
 
-
+reload(sys)  
+sys.setdefaultencoding('utf8')
 def removeParentheses(sentence):
     pCounter = 0
     newSentence = ""
@@ -28,43 +31,26 @@ class NER(object):
         rel_path = '../data/' + txt_path
         f_path = os.path.join(cur_path, rel_path)
 
+
+        punct = {'.!?'}
         with open(f_path, 'r') as f:
             txt = f.readlines()
 
+        #txt = filter(lambda x : any (p in x for p in punct), txt)
+
         txt = [x.strip() for x in txt]
-        txt = list(filter(None, txt))
-        self.txt = txt
 
-        # Only grab complete sentences
-        regex = re.compile(r'([A-Z][^\.!?]*[\.!?])', re.M)
-
-        sentences = [x for x in txt if regex.search(x)]
-        all_sentences = []
-
-        # Pattern for splitting sentences
         sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
-        for sentence in sentences:
-            # Remove anything in between parenthesis, slashs, brackets,...
-            sentence = removeParentheses(sentence)
-            all_sentences += re.split(sentence_regex, sentence)
+        regex = re.compile(sentence_regex)
 
-        self.sentences = all_sentences
-
-        tokens = []
-        tagged_sentences = []
-
-        for sentence in self.sentences:
-            # Get rid of punctuation
-            # tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+')
-            # token = tokenizer.tokenize(sentence)
-            token = nltk.word_tokenize(sentence)
-            tokens.append(token)
-            ne_tree = nltk.chunk.ne_chunk(nltk.pos_tag(token))
-            iob_tagged = nltk.chunk.tree2conlltags(ne_tree)
-            tagged_sentences.append(iob_tagged)
-
-        self.tagged_sentences = tagged_sentences
-        self.tokens = tokens
+        txt = [x for x in txt if regex.search(x)]
+        txt = ''.join(str(elem) for elem in txt)
+        self.txt = txt
+        nlp = spacy.load('en')
+        doc = nlp(unicode(txt))
+        
+        for sent in doc.sents:
+            print sent.string
 
     def basicWho(self, i):
         tagged = self.tagged_sentences[i]
@@ -131,20 +117,4 @@ class NER(object):
         ne_tree = nltk.chunk.conlltags2tree(self.tagged_sentences[i])
         ne_tree.draw()
 
-<<<<<<< HEAD
-# txt = NER("set1/a1.txt")
-# s = 10
-# txt.printSentence(s)
-# txt.printTag(s)
-# txt.basicWho(s)
-# txt.basicWhat(s)
-# txt.basicLocation(s)
-=======
-txt = NER("set1/a3.txt")
-s = 10
-txt.printSentence(s)
-txt.printTag(s)
-txt.basicWho(s)
-txt.basicWhat(s)
-txt.basicLocation(s)
->>>>>>> 6d3d9684d66308f76a8efc70b7165b9f82839c70
+txt = NER("set2/a1.txt")
