@@ -32,7 +32,8 @@ for token in parsedData:
     print(token.orth_, token.dep_, token.head.orth_, [t.orth_ for t in token.lefts], [t.orth_ for t in token.rights])
 
 # NER
-example = "The symbol of the scales is based on the Scales of Justice held by Themis, the Greek personification of divine law and custom."
+example = "English is a West Germanic language that was first spoken in early medieval England and is now the global lingua franca."
+example = "The English man walked down the street."
 parsedEx = parser(example)
 
 # if you just want the entities and nothing else, you can do access the parsed examples "ents" property like this:
