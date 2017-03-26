@@ -1,4 +1,3 @@
-import nltk
 import spacy
 import os
 import re
@@ -32,18 +31,26 @@ class NER(object):
         rel_path = '../data/' + txt_path
         f_path = os.path.join(cur_path, rel_path)
 
-        with open(f_path, 'r') as f:
-            txt = f.read()
 
+        punct = {'.!?'}
+        with open(f_path, 'r') as f:
+            txt = f.readlines()
+
+        #txt = filter(lambda x : any (p in x for p in punct), txt)
+
+        txt = [x.strip() for x in txt]
+
+        sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
+        regex = re.compile(sentence_regex)
+
+        txt = [x for x in txt if regex.search(x)]
+        txt = ''.join(str(elem) for elem in txt)
         self.txt = txt
-        regex = re.compile(r'([A-Z][^\.!?]*[\.!?])', re.M)
-        #txt = removeParentheses(txt)
         nlp = spacy.load('en')
         doc = nlp(unicode(txt))
-
-        sentences = doc.sents
+        
         for sent in doc.sents:
-            print sent
+            print sent.string
 
     def basicWho(self, i):
         tagged = self.tagged_sentences[i]
