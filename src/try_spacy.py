@@ -16,7 +16,7 @@ def to_nltk_tree(node):
 
 
 
-sentence = "The first written records appeared over 3,000 years ago during the Shange dynasty."
+sentence = "Is the battery made by Volta credited as the first electromechanical cell?"
 
 doc = parser(sentence)
 

@@ -1,4 +1,5 @@
 import spacy
+from spacy.tokens.span import Span
 import os
 import re
 import sys  
@@ -59,4 +60,18 @@ class NER(object):
                 print right
                 print " "
 
-txt = NER("set2/a1.txt")
+        #this is pretty sketch but I'm working on a better one for Who questions
+        for sent in doc.sents:
+            for i in range(0, len(sent)-1) :
+                if sent[i].ent_type_ == "PERSON":
+                    hi = Span(doc, sent.start, i+sent.start)
+                    while i < len(sent)-1:
+                        if sent[i].ent_type_ == "PERSON":
+                            i = i+1
+                        else:
+                            break
+                    end = Span(doc, i + sent.start, sent.end-1)
+                    print hi.text + " who " + end.text + "?"
+                    break;
+
+txt = NER("set1/a1.txt")
