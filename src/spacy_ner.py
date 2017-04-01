@@ -60,18 +60,24 @@ class NER(object):
                 print right
                 print " "
 
-        #this is pretty sketch but I'm working on a better one for Who questions
         for sent in doc.sents:
             for i in range(0, len(sent)-1) :
-                if sent[i].ent_type_ == "PERSON":
+                if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
+                    print sent
                     hi = Span(doc, sent.start, i+sent.start)
+                    i = i+1
                     while i < len(sent)-1:
                         if sent[i].ent_type_ == "PERSON":
+                            i = i+1
+                        elif sent[i].dep_ == "nsubj":
                             i = i+1
                         else:
                             break
                     end = Span(doc, i + sent.start, sent.end-1)
-                    print hi.text + " who " + end.text + "?"
-                    break;
-
+                    if (hi.text == ""):
+                        print "Who " + end.text + "?"
+                    else:
+                        print hi.text + " who " + end.text + "?"
+                    print ""
+                    break
 txt = NER("set1/a1.txt")
