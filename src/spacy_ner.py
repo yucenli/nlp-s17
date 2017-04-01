@@ -36,8 +36,6 @@ class NER(object):
         with open(f_path, 'r') as f:
             txt = f.readlines()
 
-        #txt = filter(lambda x : any (p in x for p in punct), txt)
-
         txt = [x.strip() for x in txt]
 
         sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
@@ -50,7 +48,20 @@ class NER(object):
         doc = nlp(unicode(txt))
         
         for sent in doc.sents:
+<<<<<<< HEAD
             print(sent.string)
+=======
+            if (sent.root.lemma_ == "be"):
+                print sent
+                for r in sent.root.rights:
+                    print "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+                    break
+                right = ""
+                for r in sent.root.lefts:
+                    right = "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+                print right
+                print " "
+>>>>>>> 5f28b99842900f8831fbde6cf0222a5e7b752f7e
 
     def basicWho(self, i):
         tagged = self.tagged_sentences[i]
