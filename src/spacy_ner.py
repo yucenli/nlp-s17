@@ -1,10 +1,10 @@
 import spacy
 import os
 import re
-import sys  
+import sys
 import string
 
-reload(sys)  
+reload(sys)
 sys.setdefaultencoding('utf8')
 def removeParentheses(sentence):
     pCounter = 0
@@ -50,7 +50,7 @@ class NER(object):
         doc = nlp(unicode(txt))
         
         for sent in doc.sents:
-            print sent.string
+            print(sent.string)
 
     def basicWho(self, i):
         tagged = self.tagged_sentences[i]

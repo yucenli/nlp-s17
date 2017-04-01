@@ -15,15 +15,18 @@ def filterSentencesByWord(sentences, taggedSentences, mWord):
     return (filteredSentences, filteredTaggedSentences)
 
 
-auxVerbs = ["have", "be", "do"]
+auxVerbs = ["have", "be", "do", "was", "is", "did", "has", "am", "are"]
 
-question = "Where was Clint Dempsey born?"
+wasQuestion = "Was Dempsey born in Nacogdoches, Texas?"
+whereQuestion = "Where was Clint Dempsey born?"
+whoQuestion = "Who selected Clint Dempsey eighth overall in the 2004 MLS SuperDraft."
 
 txt = txt_ner.NER("set1/a1.txt")
 sentences = txt.sentences
 taggedSentences = txt.tagged_sentences
 
-q = ner.NER(question)
+# q = ner.NER(whereQuestion)
+q = ner.NER(whoQuestion)
 q.printTag()
 
 for wordTag in q.tagged_sentence:
