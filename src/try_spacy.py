@@ -5,10 +5,31 @@ from nltk import Tree
 from spacy.en import English
 parser = English()
 
-sentence = "One of Dempsey's passions outside of soccer is hip-hop"
+def tok_format(tok):
+    return "_".join([tok.orth_, tok.tag_])
+
+def to_nltk_tree(node):
+    if node.n_lefts + node.n_rights > 0:
+        return Tree(tok_format(node), [to_nltk_tree(child) for child in node.children])
+    else:
+        return tok_format(node)
+
+
+
+sentence = "The first written records appeared over 3,000 years ago during the Shange dynasty."
 
 doc = parser(sentence)
+
+print sentence
+[to_nltk_tree(sent.root).pretty_print() for sent in doc.sents]
+
 for sent in doc.sents:
+
+    for token in sent:
+        if token.ent_type_ == "DATE":
+            print token
+
+
     print sent.root
     if (sent.root.lemma_ == "be"):
         print sent
@@ -19,15 +40,4 @@ for sent in doc.sents:
         for r in sent.root.lefts:
             right = "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
         print right
-
-def tok_format(tok):
-    return "_".join([tok.orth_, tok.tag_])
-
-def to_nltk_tree(node):
-    if node.n_lefts + node.n_rights > 0:
-        return Tree(tok_format(node), [to_nltk_tree(child) for child in node.children])
-    else:
-        return tok_format(node)
-
-[to_nltk_tree(sent.root).pretty_print() for sent in doc.sents]
 
