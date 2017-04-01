@@ -60,6 +60,9 @@ class NER(object):
                 print right
                 print " "
 
+        # Who questions
+        subject = ["he", "she", "they"]
+
         for sent in doc.sents:
             for i in range(0, len(sent)-1) :
                 if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
