@@ -2,10 +2,10 @@ import spacy
 from spacy.tokens.span import Span
 import os
 import re
-import sys  
+import sys
 import string
 
-reload(sys)  
+reload(sys)
 sys.setdefaultencoding('utf8')
 def removeParentheses(sentence):
     pCounter = 0
@@ -49,6 +49,7 @@ class NER(object):
         doc = nlp(unicode(txt))
         
         for sent in doc.sents:
+            print(sent.string)
             if (sent.root.lemma_ == "be"):
                 print sent
                 for r in sent.root.rights:

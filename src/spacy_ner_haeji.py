@@ -49,14 +49,14 @@ class NER(object):
 
         for sent in doc.sents:
             if (sent.root.lemma_ == "be"):
-                print sent
+                print(sent)
                 for r in sent.root.rights:
-                    print "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+                    print("What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?")
                     break
                 right = ""
                 for r in sent.root.lefts:
                     right = "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
-                print right
+                print(right)
 
                 #-----------------------
                 for r in sent.root.rights:
@@ -64,7 +64,7 @@ class NER(object):
                     for l in sent. root.lefts:
                         isquest1 += " " + ' '.join(w.text for w in l.subtree)
                     isquest1 += " " +' '.join(w.text for w in r.subtree) + " " +'?'
-                print isquest1
+                print(isquest1)
 
             if (sent.root.pos_ == "VERB"):
                 # print sent.root.tag_
@@ -76,14 +76,14 @@ class NER(object):
                     elif sent.root.tag_ == 'VBD':
                         v_question = 'Did'
                     elif sent.root.tag_ == 'VBZ':
-                	    v_question = 'Does'
+                        v_question = 'Does'
 
                     for l in sent. root.lefts:
                         v_question += " " + ' '.join(w.text for w in l.subtree)
                     v_question += " " +' '.join(w.text for w in r.subtree) + " " +'?'
-                print v_question
+                print(v_question)
 
-            print " "
+            print(" ")
 
     def basicWho(self, i):
         tagged = self.tagged_sentences[i]
