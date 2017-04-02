@@ -83,4 +83,33 @@ class NER(object):
                         print hi.text + " who " + end.text + "?"
                     print ""
                     break
-txt = NER("set1/a1.txt")
+
+        # When questions
+        for sent in doc.sents:
+            for i in range(0, len(sent)-1):
+                if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"): 
+                    print sent
+                    hi = Span(doc, sent.start, i+sent.start)
+                    head = sent[i].head
+                    while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
+                        i = i+1
+                    end = Span(doc, i + sent.start, sent.end-1)
+                    verb = sent[i]
+                    for t in sent.root.lefts:
+                        verb = t
+                    if verb.lemma_ == "be":
+                        final = "When was "
+                    else:
+                        final = "When did "
+                    for token in end:
+                        if verb.lemma_ == "be" and token.lemma_ == "be":
+                            final = final
+                        elif verb.lemma_ != "be" and token == sent.root:
+                            final = final + sent.root.lemma_ + " "
+                        else:
+                            final = final + token.orth_ + " "
+                    print final[:-1] + "?"
+                    print ""
+                    break
+
+txt = NER("set2/a1.txt")
