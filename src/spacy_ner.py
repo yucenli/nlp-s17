@@ -1,4 +1,5 @@
 import spacy
+from spacy.tokens.span import Span
 import os
 import re
 import sys
@@ -60,69 +61,27 @@ class NER(object):
                 print right
                 print " "
 
-    def basicWho(self, i):
-        tagged = self.tagged_sentences[i]
-        people = []
-        person = ""
-        for word in tagged:
-            if word[2] == "B-PERSON":
-                if person != "":
-                    people.append(person)
-                person = word[0]
-            elif word[2] == "I-PERSON":
-                person += " " + word[0]
-            elif person != "":
-                people.append(person)
-                person = ""
-        if person != "":
-            people.append(person)
-        for person in people:
-            print("Who is " + person + "?")
+        # Who questions
+        subject = ["he", "she", "they"]
 
-    def basicLocation(self, i):
-        tagged = self.tagged_sentences[i]
-        places = []
-        place = ""
-        for word in tagged:
-            if word[2] == "B-GPE":
-                place = word[0]
-            elif word[2] == "I-GPE":
-                place += " " + word[0]
-            elif place != "":
-                places.append(place)
-                place = ""
-        if place != "":
-            places.append(place)
-        for place in places:
-            print("What happened in " + place + "?")
-
-    def basicWhat(self, i):
-        tagged = self.tagged_sentences[i]
-        orgs = []
-        org = ""
-        for word in tagged:
-            if word[2] == "B-ORGANIZATION":
-                print(word)
-                org = word[0]
-            elif word[2] == "I-ORGANIZATION":
-                org += " " + word[0]
-                print(org)
-            elif org != "":
-                orgs.append(org)
-                org = ""
-        if org != "":
-            orgs.append(org)
-        for org in orgs:
-            print("What is " + org + "?")
-
-    def printSentence(self, i):
-        print(self.sentences[i])
-
-    def printTag(self, i):
-        print(self.tagged_sentences[i])
-
-    def drawTree(self, i):
-        ne_tree = nltk.chunk.conlltags2tree(self.tagged_sentences[i])
-        ne_tree.draw()
-
-txt = NER("set2/a1.txt")
+        for sent in doc.sents:
+            for i in range(0, len(sent)-1) :
+                if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
+                    print sent
+                    hi = Span(doc, sent.start, i+sent.start)
+                    i = i+1
+                    while i < len(sent)-1:
+                        if sent[i].ent_type_ == "PERSON":
+                            i = i+1
+                        elif sent[i].dep_ == "nsubj":
+                            i = i+1
+                        else:
+                            break
+                    end = Span(doc, i + sent.start, sent.end-1)
+                    if (hi.text == ""):
+                        print "Who " + end.text + "?"
+                    else:
+                        print hi.text + " who " + end.text + "?"
+                    print ""
+                    break
+txt = NER("set1/a1.txt")
