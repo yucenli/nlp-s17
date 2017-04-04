@@ -129,20 +129,16 @@ class NER(object):
                     # possible_locations.append(oneloc)
                     i = j
 
-                    for t in sent.root.lefts:
-                        if t.pos_ == "VERB":
-                            verb = t
-
-                    if verb.lemma_ == "be":
-                        final = "Where was "
-                    elif verb.tag_ == "VB":
-                        final = "Where do "
-                    elif verb.tag_ == "VBP":
-                        final = "Where have "
-                    else:
-                        final = "Where did "
-
                     for r in sent.root.rights:
+
+                        if sent.root.lemma_ == "be":
+                            final = "Where was "
+                        elif sent.root.tag_ == "VB":
+                            final = "Where do "
+                        elif sent.root.tag_ == "VBP":
+                            final = "Where have "
+                        else:
+                            final = "Where did "
                         subject = ''
                         for l in sent.root.lefts:
                             if l.right_edge.dep_=='nsubj':
@@ -150,8 +146,9 @@ class NER(object):
                                 break
                             else:
                                 subject =  ' '.join(w.text for w in l.subtree)
-                        final += subject + " " + verb.lemma_ + " " + ' '.join(w.text for w  in r.subtree) + " ?"
+                        final += subject + " " + sent.root.lemma_ + " " + ' '.join(w.text for w  in r.subtree) + " ?"
                         break
+
 
                     final = final.replace(oneloc, "")
                     print final[:-1] + "?"

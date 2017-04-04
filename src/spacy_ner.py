@@ -46,19 +46,19 @@ class NER(object):
         self.txt = txt
         nlp = spacy.load('en')
         doc = nlp(unicode(txt))
+
+        questions = []
         
         for sent in doc.sents:
-            print(sent.string)
             if (sent.root.lemma_ == "be"):
-                print sent
                 for r in sent.root.rights:
+                    questions.append("What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?")
                     print "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
                     break
                 right = ""
                 for r in sent.root.lefts:
+                    questions.append("What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?")
                     right = "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
-                print right
-                print " "
 
         # Who questions
         subject = ["he", "she"]
@@ -66,8 +66,10 @@ class NER(object):
         for sent in doc.sents:
             for i in range(0, len(sent)-1) :
                 if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
-                    print sent
-                    hi = Span(doc, sent.start, i+sent.start)
+                    if i > 0:
+                        start = Span(doc, sent.start, i+sent.start-1)
+                    else:
+                        start = Span(doc, sent.start, sent.start)
                     i = i+1
                     while i < len(sent)-1:
                         if sent[i].ent_type_ == "PERSON":
@@ -77,11 +79,12 @@ class NER(object):
                         else:
                             break
                     end = Span(doc, i + sent.start, sent.end-1)
-                    if (hi.text == ""):
+                    if (len(start) == 0):
                         print "Who " + end.text + "?"
+                        questions.append("Who " + end.text + "?")
                     else:
-                        print hi.text + " who " + end.text + "?"
-                    print ""
+                        print start.text + " who " + end.text + "?"
+                        questions.append("Who " + end.text + "?")
                     break
 
         # When questions
@@ -89,7 +92,6 @@ class NER(object):
         for sent in doc.sents:
             for i in range(0, len(sent)-1):
                 if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"): 
-                    print sent
                     hi = Span(doc, sent.start, i+sent.start)
                     head = sent[i].head
                     while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
@@ -110,11 +112,8 @@ class NER(object):
                         else:
                             final = final + token.orth_ + " "
                     print final[:-1] + "?"
-                    print ""
+                    questions.append(final[:-1] + "?")
                     break
-
-        for i in range(0, 10):
-            print ""
 
         for sent in doc.sents:
             for i in range(0, len(sent)-1):
@@ -123,7 +122,6 @@ class NER(object):
                         front = Span(doc, sent.start, i+sent.start-1)
                     else:
                         font = []
-                    print sent
                     valid = False
                     while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
                         i = i+1
@@ -147,8 +145,16 @@ class NER(object):
                             else:
                                 final = final + token.orth_ + " "
                         print final[:-1] + "?"
-                        print ""
+                        questions.append(final[:-1] + "?")
                     break
 
+        for i in range(0, 10):
+            print ""
 
-txt = NER("set3/a1.txt")
+
+        for q in questions:
+            if q.count(' ') > 3 and q.count(' ') < 20:
+                print q
+
+
+txt = NER("set1/a1.txt")
