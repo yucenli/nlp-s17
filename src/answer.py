@@ -94,8 +94,12 @@ def get_cosine(vec1, vec2):
 
 
 def text_to_vector(text):
-    words = WORD.findall(text)
-    return Counter(words)
+    # words = WORD.findall(text)
+    wordVector = []
+    doc = nlp(unicode(text))
+    for token in doc:
+        wordVector.append(token.lemma_.lower())
+    return Counter(wordVector)
 
 
 class CosineSim(object):
@@ -128,9 +132,14 @@ class CosineSim(object):
         self.sortSentSimCount = sorted(self.sentSimCount,
                                        key=self.sentSimCount.get,
                                        reverse=True)
-        for i in xrange(5):
-            sent = self.sortSentSimCount[i]
-            print(sent, self.sentSimCount[sent])
+        firstSentScore = self.sentSimCount[self.sortSentSimCount[0]]
+        secSentScore = self.sentSimCount[self.sortSentSimCount[1]]
+        if (firstSentScore - secSentScore > 0.2):
+            print(self.sortSentSimCount[0], firstSentScore)
+        else:
+            for i in xrange(10):
+                sent = self.sortSentSimCount[i]
+                print(sent, self.sentSimCount[sent])
 
 
 class CosineSim1(object):
@@ -197,10 +206,7 @@ class CosineSim1(object):
 # txt = NER("set1/a1.txt", root.lemma_)
 
 
-# question = "Who did Beckham start dating in 1997?"
-# question = "When did Beckham make his Premier League debut for Manchester United?"
-# question = "When did Beckham undergo a medical with Paris Saint-Germain ahead of a potential move to the Ligue 1 side?"
-question = "When does the Andromedids meteor shower appear to radiate from Andromeda?"
+# question = "Who composed the Slumdog Millionaire soundtrack?"
 # sentence = nlp(unicode(question))
 
 # for word in sentence:
@@ -210,13 +216,21 @@ question = "When does the Andromedids meteor shower appear to radiate from Andro
 # print(root.text.lower())
 # print(root.lemma_)
 
-print(question)
+# print(question)
 
 # if root.lemma_ != "be":
 #     txt = NER("set1/a6.txt", root.lemma_)
 #     for sent in txt.relevSentences:
 #         print(sent)
-txt = CosineSim("set2/a3.txt", question)
+# txt = CosineSim("set4/a3.txt", question)
+
+with open("questions.txt") as f:
+  questionsList = f.readlines()
+questionsList = [x.strip() for x in questionsList]
+
+for question in questionsList:
+  print(question)
+  CosineSim("set3/a1.txt", question)
 
 
 
