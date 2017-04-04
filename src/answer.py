@@ -4,8 +4,8 @@ import os
 import re
 import sys
 from collections import Counter, defaultdict
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.metrics.pairwise import linear_kernel
 
 nlp = spacy.load('en')
 
@@ -116,7 +116,7 @@ class CosineSim(object):
 
         txt = [x for x in txt if regex.search(x)]
         txt = removeSemiColons(txt)
-        txt = ''.join(str(elem) for elem in txt)
+        txt = ' '.join(str(elem) for elem in txt)
         self.txt = txt
         self.sentSimCount = defaultdict(float)
         questionVec = text_to_vector(question)
@@ -128,7 +128,7 @@ class CosineSim(object):
         self.sortSentSimCount = sorted(self.sentSimCount,
                                        key=self.sentSimCount.get,
                                        reverse=True)
-        for i in xrange(10):
+        for i in xrange(5):
             sent = self.sortSentSimCount[i]
             print(sent, self.sentSimCount[sent])
 
@@ -160,10 +160,9 @@ class CosineSim1(object):
         tfidf = TfidfVectorizer().fit_transform(self.sentences)
         tfidfQ = TfidfVectorizer().fit_transform([question])
         cosine_similarities = linear_kernel(tfidfQ, tfidf).flatten()
-        related_docs_indices = cosine_similarities.argsort()[:-5:-1]
+        related_docs_indices = cosine_similarities.argsort()[-5:-1]
         for i in related_docs_indices:
             print(self.sentences[related_docs_indices[i]])
-            
 
 
 # question = "Who selected Clint Dempsey eighth overall in the 2004 MLS SuperDraft?"
@@ -198,23 +197,26 @@ class CosineSim1(object):
 # txt = NER("set1/a1.txt", root.lemma_)
 
 
-question = "Who did Beckham start dating in 1997?"
-sentence = nlp(unicode(question))
+# question = "Who did Beckham start dating in 1997?"
+# question = "When did Beckham make his Premier League debut for Manchester United?"
+# question = "When did Beckham undergo a medical with Paris Saint-Germain ahead of a potential move to the Ligue 1 side?"
+question = "When does the Andromedids meteor shower appear to radiate from Andromeda?"
+# sentence = nlp(unicode(question))
 
-for word in sentence:
-    print(word.text, word.pos_, word.dep_, word.head.text)
+# for word in sentence:
+#     print(word.text, word.pos_, word.dep_, word.head.text)
 
-root = [w for w in sentence if w.head is w][0]
-print root.text.lower()
-print root.lemma_
+# root = [w for w in sentence if w.head is w][0]
+# print(root.text.lower())
+# print(root.lemma_)
 
-print question
+print(question)
 
-if root.lemma_ != "be":
-    txt = NER("set1/a6.txt", root.lemma_)
-    for sent in txt.relevSentences:
-        print(sent)
-txt = CosineSim1("set1/a6.txt", question)
+# if root.lemma_ != "be":
+#     txt = NER("set1/a6.txt", root.lemma_)
+#     for sent in txt.relevSentences:
+#         print(sent)
+txt = CosineSim("set2/a3.txt", question)
 
 
 
