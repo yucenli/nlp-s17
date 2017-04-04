@@ -33,7 +33,6 @@ class NER(object):
         f_path = os.path.join(cur_path, rel_path)
 
 
-        punct = {'.!?'}
         with open(f_path, 'r') as f:
             txt = f.readlines()
 
@@ -62,7 +61,7 @@ class NER(object):
                 print " "
 
         # Who questions
-        subject = ["he", "she", "they"]
+        subject = ["he", "she"]
 
         for sent in doc.sents:
             for i in range(0, len(sent)-1) :
@@ -84,4 +83,72 @@ class NER(object):
                         print hi.text + " who " + end.text + "?"
                     print ""
                     break
-txt = NER("set1/a1.txt")
+
+        # When questions
+        # Only works when original sentence is "In ____, blah blah."
+        for sent in doc.sents:
+            for i in range(0, len(sent)-1):
+                if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"): 
+                    print sent
+                    hi = Span(doc, sent.start, i+sent.start)
+                    head = sent[i].head
+                    while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
+                        i = i+1
+                    end = Span(doc, i + sent.start, sent.end-1)
+                    verb = sent[i]
+                    for t in sent.root.lefts:
+                        verb = t
+                    if verb.lemma_ == "be":
+                        final = "When was "
+                    else:
+                        final = "When did "
+                    for token in end:
+                        if verb.lemma_ == "be" and token.lemma_ == "be":
+                            final = final
+                        elif verb.lemma_ != "be" and token == sent.root:
+                            final = final + sent.root.lemma_ + " "
+                        else:
+                            final = final + token.orth_ + " "
+                    print final[:-1] + "?"
+                    print ""
+                    break
+
+        for i in range(0, 10):
+            print ""
+
+        for sent in doc.sents:
+            for i in range(0, len(sent)-1):
+                if (sent[i].ent_type_ == "DATE"): 
+                    if (i > 0):
+                        front = Span(doc, sent.start, i+sent.start-1)
+                    else:
+                        font = []
+                    print sent
+                    valid = False
+                    while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
+                        i = i+1
+                        valid = True
+                    if valid:
+                        end = Span(doc, sent.start + i, sent.end-1)
+                        verb = sent[i]
+                        for t in sent.root.lefts:
+                            verb = t
+                        if verb.lemma_ == "be":
+                            final = "When was "
+                        else:
+                            final = "When did "
+                        for token in front:
+                            final = final + token.text + " "
+                        for token in end:
+                            if verb.lemma_ == "be" and token.lemma_ == "be":
+                                final = final
+                            elif verb.lemma_ != "be" and token == sent.root:
+                                final = final + sent.root.lemma_ + " "
+                            else:
+                                final = final + token.orth_ + " "
+                        print final[:-1] + "?"
+                        print ""
+                    break
+
+
+txt = NER("set3/a1.txt")

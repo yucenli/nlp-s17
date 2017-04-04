@@ -157,8 +157,8 @@ class CosineSim1(object):
         doc = nlp(unicode(txt))
         for sent in doc.sents:
             self.sentences.append(sent.string)
-        tfidf = TfidfVectorizer().fit_transforms(self.sentences)
-        tfidfQ = TfidfVectorizer().fit_transforms([question])
+        tfidf = TfidfVectorizer().fit_transform(self.sentences)
+        tfidfQ = TfidfVectorizer().fit_transform([question])
         cosine_similarities = linear_kernel(tfidfQ, tfidf).flatten()
         related_docs_indices = cosine_similarities.argsort()[-5:-1]
         for i in related_docs_indices:
