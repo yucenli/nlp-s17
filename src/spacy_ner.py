@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import string
+from collections import Counter
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -48,22 +49,38 @@ class NER(object):
         doc = nlp(unicode(txt))
 
         questions = []
+        who = []
+
+        words = []
+        for word in doc:
+            if word.pos_ == "NOUN" or word.pos_ == "VERB":
+                words.append(word.lemma_)
+
+        count = Counter(words)
         
         for sent in doc.sents:
+
+            rel = 0
+            for word in sent:
+                rel += count.get(word.lemma_, 0)
+
+            rel = rel/float(len(sent))
+
             if (sent.root.lemma_ == "be"):
                 for r in sent.root.rights:
-                    questions.append("What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?")
-                    print "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+                    join = ' '.join(w.text for w in r.subtree)
+                    if join[-1] == ",":
+                        join = join[:-2]
+                    questions.append(("What " + sent.root.text + " " + join + "?", rel))
                     break
-                right = ""
                 for r in sent.root.lefts:
-                    questions.append("What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?")
-                    right = "What " + sent.root.text + " " + ' '.join(w.text for w in r.subtree) + "?"
+                    join = ' '.join(w.text for w in r.subtree)
+                    if join[-1] == ",":
+                        join = join[:-2]
+                    questions.append(("What " + sent.root.text + " " + join + "?", rel))
 
-        # Who questions
-        subject = ["he", "she"]
-
-        for sent in doc.sents:
+            # Who questions
+            subject = ["he", "she"]
             for i in range(0, len(sent)-1) :
                 if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
                     if i > 0:
@@ -81,15 +98,17 @@ class NER(object):
                     end = Span(doc, i + sent.start, sent.end-1)
                     if (len(start) == 0):
                         print "Who " + end.text + "?"
-                        questions.append("Who " + end.text + "?")
+                        questions.append(("Who " + end.text + "?", rel))
+                        who.append("Who " + end.text + "?")
                     else:
                         print start.text + " who " + end.text + "?"
-                        questions.append("Who " + end.text + "?")
+                        questions.append((start.text + " who " + end.text + "?", rel))
+                        who.append(start.text + " who " + end.text + "?")
+                        questions.append(("Who " + end.text + "?", rel))
                     break
 
-        # When questions
-        # Only works when original sentence is "In ____, blah blah."
-        for sent in doc.sents:
+            # When questions
+            # Only works when original sentence is "In ____, blah blah."
             for i in range(0, len(sent)-1):
                 if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"): 
                     hi = Span(doc, sent.start, i+sent.start)
@@ -110,12 +129,14 @@ class NER(object):
                         elif verb.lemma_ != "be" and token == sent.root:
                             final = final + sent.root.lemma_ + " "
                         else:
-                            final = final + token.orth_ + " "
+                            if token.ent_type_ == "":
+                                final = final + token.lower_ + " "
+                            else:
+                                final = final + token.text + " "
                     print final[:-1] + "?"
-                    questions.append(final[:-1] + "?")
+                    questions.append((final[:-1] + "?", rel))
                     break
 
-        for sent in doc.sents:
             for i in range(0, len(sent)-1):
                 if (sent[i].ent_type_ == "DATE"): 
                     if (i > 0):
@@ -136,7 +157,10 @@ class NER(object):
                         else:
                             final = "When did "
                         for token in front:
-                            final = final + token.text + " "
+                            if token.ent_type_ == "":
+                                final = final + token.lower_ + " "
+                            else:
+                                final = final + token.text + " "
                         for token in end:
                             if verb.lemma_ == "be" and token.lemma_ == "be":
                                 final = final
@@ -145,16 +169,23 @@ class NER(object):
                             else:
                                 final = final + token.orth_ + " "
                         print final[:-1] + "?"
-                        questions.append(final[:-1] + "?")
+                        questions.append((final[:-1] + "?", rel))
                     break
 
         for i in range(0, 10):
             print ""
 
 
+        questions = sorted(questions, key=lambda x: x[1], reverse=True)
         for q in questions:
-            if q.count(' ') > 3 and q.count(' ') < 20:
-                print q
+            if q[0].count(' ') > 3 and q[0].count(' ') < 20:
+                print q[0]
+                print q[1]
 
+        for i in range(0, 10):
+            print ""
 
-txt = NER("set1/a1.txt")
+        for q in who:
+            print q
+
+txt = NER("set4/a4.txt")
