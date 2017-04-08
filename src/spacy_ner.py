@@ -49,7 +49,6 @@ class NER(object):
         doc = nlp(unicode(txt))
 
         questions = []
-        who = []
 
         words = []
         for word in doc:
@@ -99,11 +98,8 @@ class NER(object):
                     if (len(start) == 0):
                         print "Who " + end.text + "?"
                         questions.append(("Who " + end.text + "?", rel))
-                        who.append("Who " + end.text + "?")
                     else:
                         print start.text + " who " + end.text + "?"
-                        questions.append((start.text + " who " + end.text + "?", rel))
-                        who.append(start.text + " who " + end.text + "?")
                         questions.append(("Who " + end.text + "?", rel))
                     break
 
@@ -169,8 +165,91 @@ class NER(object):
                         questions.append((final[:-1] + "?", rel))
                     break
 
-    
+            # possible_locations = []
+            for i in range(0, len(sent)-1):
+                # if (sent[i].ent_type_ == "GPE" and sent[i-1].ent_type_ != "GPE"):
+                if (sent[i].ent_type_ == "GPE" and sent[i-1].ent_type_ != "GPE" and sent[i-1].tag_ == "IN"):
+                    # print sent
+                    oneloc = str(sent[i])
+                    j = i
+                    while j < len(sent)-1 and sent[j+1].ent_type_ == "GPE":
+                        oneloc += " " + str(sent[j+1])
+                        j = j + 1
+                    # possible_locations.append(oneloc)
+                    i = j
 
+                    for r in sent.root.rights:
+
+                        if sent.root.lemma_ == "be":
+                            final = "Where was "
+                        elif sent.root.tag_ == "VB":
+                            final = "Where do "
+                        elif sent.root.tag_ == "VBP":
+                            final = "Where have "
+                        else:
+                            final = "Where did "
+                        subject = ''
+                        for l in sent.root.lefts:
+                            if l.right_edge.dep_=='nsubj':
+                                subject = str(l.right_edge)
+                                break
+                            else:
+                                subject =  ' '.join(w.text for w in l.subtree)
+                        final += subject + " " + sent.root.lemma_ + " " + ' '.join(w.text for w  in r.subtree) + "?"
+                        break
+                    final = final.replace(oneloc, "")
+                    print final[:-1] + "?"
+                    print ""
+                    break
+
+        # DO/ DID DOES HAVE questions
+            if (sent.root.pos_ == "VERB"):
+                # print sent.root.tag_
+                v_question = ""
+                for r in sent.root.rights:
+
+                    if sent.root.tag_ == 'VB':
+                        v_question = 'Do'
+                    elif sent.root.tag_ == 'VBD':
+                        v_question = 'Did'
+                    elif sent.root.tag_ == 'VBZ':
+                        v_question = 'Does'
+                    elif sent.root.tag_ == 'VBN':
+                        v_question = 'Have'
+                    elif sent.root.tag_ == 'VBP':
+                        break
+                    else:
+                        break
+
+                    subject =''
+                    for l in sent.root.lefts:
+                        if l.right_edge.dep_=='nsubj':
+                            subject = str(l.right_edge)
+                            break
+                        elif v_question == 'Have':
+                            subject =  ' '.join(w.text for w in l.subtree)
+                            break
+                        else:  subject =  ' '.join(w.text for w in l.subtree)
+                    v_question += " " + subject + " " + sent.root.lemma_ + " " +' '.join(w.text for w in r.subtree) + '?'
+                    break
+
+                print v_question
+                print ""
+
+        # Is Was Were Questions
+            if (sent.root.lemma_ == "be"):
+                print sent
+                for r in sent.root.rights:
+                    if sent.root.text == '\'s':
+                        isquest1 == 'Is'
+                    else:
+                        isquest1 = sent.root.text.capitalize()
+                    for l in sent.root.lefts:
+                        isquest1 += " " + ' '.join(w.text for w in l.subtree)
+                    isquest1 += ' ' +' '.join(w.text for w in r.subtree) +'?'
+                    break
+                print isquest1
+                print ""
         for i in range(0, 10):
             print ""
 
