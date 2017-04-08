@@ -129,10 +129,7 @@ class NER(object):
                         elif verb.lemma_ != "be" and token == sent.root:
                             final = final + sent.root.lemma_ + " "
                         else:
-                            if token.ent_type_ == "":
-                                final = final + token.lower_ + " "
-                            else:
-                                final = final + token.text + " "
+                            final = final + token.orth_ + " "
                     print final[:-1] + "?"
                     questions.append((final[:-1] + "?", rel))
                     break
@@ -172,20 +169,16 @@ class NER(object):
                         questions.append((final[:-1] + "?", rel))
                     break
 
+    
+
         for i in range(0, 10):
             print ""
 
 
         questions = sorted(questions, key=lambda x: x[1], reverse=True)
         for q in questions:
-            if q[0].count(' ') > 3 and q[0].count(' ') < 20:
+            if q[0].count(' ') > 3:
                 print q[0]
                 print q[1]
 
-        for i in range(0, 10):
-            print ""
-
-        for q in who:
-            print q
-
-txt = NER("set4/a4.txt")
+txt = NER("set1/a1.txt")
