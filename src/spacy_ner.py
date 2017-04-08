@@ -49,6 +49,7 @@ class NER(object):
         doc = nlp(unicode(txt))
 
         questions = []
+        when = []
 
         words = []
         for word in doc:
@@ -128,6 +129,7 @@ class NER(object):
                             final = final + token.orth_ + " "
                     print final[:-1] + "?"
                     questions.append((final[:-1] + "?", rel))
+                    when.append((final[:-1] + "?", rel))
                     break
 
             for i in range(0, len(sent)-1):
@@ -163,6 +165,7 @@ class NER(object):
                                 final = final + token.orth_ + " "
                         print final[:-1] + "?"
                         questions.append((final[:-1] + "?", rel))
+                        when.append((final[:-1] + "?", rel))
                     break
 
             # possible_locations = []
@@ -260,4 +263,6 @@ class NER(object):
                 print q[0]
                 print q[1]
 
+        for q in when:
+            print q[0]
 txt = NER("set1/a1.txt")
