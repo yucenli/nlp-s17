@@ -123,6 +123,7 @@ class CosineSim(object):
         txt = ' '.join(str(elem) for elem in txt)
         self.txt = txt
         self.question = question
+        self.answers = []
         self.getRoot()
         self.sentSimCount = defaultdict(float)
         questionVec = text_to_vector(question)
@@ -134,44 +135,54 @@ class CosineSim(object):
         self.sortSentSimCount = sorted(self.sentSimCount,
                                        key=self.sentSimCount.get,
                                        reverse=True)
-        self.getRelevSentences()
+        self.answerQuestion()
 
     def getRoot(self):
         sentence = nlp(unicode(self.question))
         root = [w for w in sentence if w.head is w][0]
         self.root = root
 
-    def getRelevSentences(self):
+    def answerQuestion(self):
         firstSentScore = self.sentSimCount[self.sortSentSimCount[0]]
         secSentScore = self.sentSimCount[self.sortSentSimCount[1]]
         if (firstSentScore - secSentScore > 0.1):
-            self.answerQuestion(self.sortSentSimCount[0])
+            print(self.sortSentSimCount[0])
+            self.determineQuestion(self.sortSentSimCount[0])
         else:
-            for i in xrange(5):
+            for i in xrange(10):
                 sent = self.sortSentSimCount[i]
-                print(sent, self.sentSimCount[sent])
-                self.answerQuestion(sent)
+                # print(sent, self.sentSimCount[sent])
+                self.determineQuestion(sent)
+        self.filterAnswers()
+        print('*' * 50)
 
-    def filterRelevSentences(self):
-        question = nlp(unicode(self.question))
-        questionRoot = [w for w in question if w.head is w][0]
-        for i in xrange(5):
-            answer = nlp(unicode(self.sortSentSimCount[i]))
-            answerRoot = [w for w in answer if w.head is w][0]
-            if answerRoot.lemma_ == questionRoot.lemma_:
-                print answer.string
+    def filterAnswers(self):
+        for a in self.answers:
+            if a:
+                print a
 
-    def answerQuestion(self, sentence):
+    def determineQuestion(self, sentence):
         questionDoc = nlp(unicode(self.question))
         for word in questionDoc:
             if word.text.lower() == "who":
                 self.answerWho(sentence)
+                break
+            elif word.text.lower() == "where":
+                self.answerWhere(sentence)
+                break
+        self.answers.append("")
 
     def answerWho(self, sentence):
         doc = nlp(unicode(sentence))
         for ent in doc.ents:
-            if (ent.label_ == "PERSON") and (ent.text not in self.question):
-                print ent.text
+            if (ent.label_ in ["PERSON", "ORG", "EVENT"]) and (ent.text not in self.question):
+                self.answers.append(ent.text)
+
+    def answerWhere(self, sentence):
+        doc = nlp(unicode(sentence))
+        for ent in doc.ents:
+            if (ent.label_ == "GPE") and (ent.text not in self.question):
+                self.answers.append(ent.text)
 
 
 class CosineSim1(object):
@@ -207,10 +218,6 @@ class CosineSim1(object):
 
 
 # question = "Who selected Clint Dempsey eighth overall in the 2004 MLS SuperDraft?"
-# sentence = nlp(unicode(question))[2]
-
-# print([w.text for w in sentence.lefts])
-# print([w.text for w in sentence.rights])
 
 # sentence = nlp(unicode(question))
 # root = [w for w in sentence if w.head is w][0]
@@ -222,20 +229,10 @@ class CosineSim1(object):
 # txt = CosineSim("set1/a1.txt", question)
 
 
-# question = "Where was Dempsey born?"
-# sentence = nlp(unicode(question))[2]
+question = "Where was Dempsey born?"
+# question = "Who is Dempsey married to?"
+txt = CosineSim("set1/a1.txt", question)
 
-# print([w.text for w in sentence.lefts])
-# print([w.text for w in sentence.rights])
-
-# sentence = nlp(unicode(question))
-# root = [w for w in sentence if w.head is w][0]
-# print root.text.lower()
-# print root.lemma_
-
-# print question
-
-# txt = NER("set1/a1.txt", root.lemma_)
 
 
 # question = "Who composed the Slumdog Millionaire soundtrack?"
@@ -245,29 +242,13 @@ class CosineSim1(object):
 # for word in sentence:
 #     print(word.text, word.pos_, word.dep_, word.head.text)
 
-# root = [w for w in sentence if w.head is w][0]
-# print(root.text.lower())
-# print(root.lemma_)
-
-# answer = nlp(unicode("The Slumdog Millionaire soundtrack was composed by A. R. Rahman, who planned the score for over two months and completed it in two weeks."))
-
-# for word in answer:
-#     print(word.text, word.pos_, word.dep_, word.head.text)
-
-
-# if root.lemma_ != "be":
-#     txt = NER("set1/a6.txt", root.lemma_)
-#     for sent in txt.relevSentences:
-#         print(sent)
 # txt = CosineSim("set4/a3.txt", question)
-# txt.filterRelevSentences()
 
 
-with open("questions.txt") as f:
-    questionsList = f.readlines()
-questionsList = [x.strip() for x in questionsList]
+# with open("who_questions.txt") as f:
+#     questionsList = f.readlines()
+# questionsList = [x.strip() for x in questionsList]
 
-for question in questionsList:
-    print(question)
-    sentences = CosineSim("set3/a1.txt", question)
-    sentences.filterRelevSentences()
+# for question in questionsList:
+#     print(question)
+#     sentences = CosineSim("set4/a4.txt", question)
