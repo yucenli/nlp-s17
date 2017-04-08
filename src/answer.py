@@ -122,6 +122,8 @@ class CosineSim(object):
         txt = removeSemiColons(txt)
         txt = ' '.join(str(elem) for elem in txt)
         self.txt = txt
+        self.question = question
+        self.getRoot()
         self.sentSimCount = defaultdict(float)
         questionVec = text_to_vector(question)
         doc = nlp(unicode(txt))
@@ -132,14 +134,44 @@ class CosineSim(object):
         self.sortSentSimCount = sorted(self.sentSimCount,
                                        key=self.sentSimCount.get,
                                        reverse=True)
+        self.getRelevSentences()
+
+    def getRoot(self):
+        sentence = nlp(unicode(self.question))
+        root = [w for w in sentence if w.head is w][0]
+        self.root = root
+
+    def getRelevSentences(self):
         firstSentScore = self.sentSimCount[self.sortSentSimCount[0]]
         secSentScore = self.sentSimCount[self.sortSentSimCount[1]]
-        if (firstSentScore - secSentScore > 0.2):
-            print(self.sortSentSimCount[0], firstSentScore)
+        if (firstSentScore - secSentScore > 0.1):
+            self.answerQuestion(self.sortSentSimCount[0])
         else:
-            for i in xrange(10):
+            for i in xrange(5):
                 sent = self.sortSentSimCount[i]
                 print(sent, self.sentSimCount[sent])
+                self.answerQuestion(sent)
+
+    def filterRelevSentences(self):
+        question = nlp(unicode(self.question))
+        questionRoot = [w for w in question if w.head is w][0]
+        for i in xrange(5):
+            answer = nlp(unicode(self.sortSentSimCount[i]))
+            answerRoot = [w for w in answer if w.head is w][0]
+            if answerRoot.lemma_ == questionRoot.lemma_:
+                print answer.string
+
+    def answerQuestion(self, sentence):
+        questionDoc = nlp(unicode(self.question))
+        for word in questionDoc:
+            if word.text.lower() == "who":
+                self.answerWho(sentence)
+
+    def answerWho(self, sentence):
+        doc = nlp(unicode(sentence))
+        for ent in doc.ents:
+            if (ent.label_ == "PERSON") and (ent.text not in self.question):
+                print ent.text
 
 
 class CosineSim1(object):
@@ -207,6 +239,7 @@ class CosineSim1(object):
 
 
 # question = "Who composed the Slumdog Millionaire soundtrack?"
+# print(question)
 # sentence = nlp(unicode(question))
 
 # for word in sentence:
@@ -216,26 +249,25 @@ class CosineSim1(object):
 # print(root.text.lower())
 # print(root.lemma_)
 
-# print(question)
+# answer = nlp(unicode("The Slumdog Millionaire soundtrack was composed by A. R. Rahman, who planned the score for over two months and completed it in two weeks."))
+
+# for word in answer:
+#     print(word.text, word.pos_, word.dep_, word.head.text)
+
 
 # if root.lemma_ != "be":
 #     txt = NER("set1/a6.txt", root.lemma_)
 #     for sent in txt.relevSentences:
 #         print(sent)
 # txt = CosineSim("set4/a3.txt", question)
+# txt.filterRelevSentences()
+
 
 with open("questions.txt") as f:
-  questionsList = f.readlines()
+    questionsList = f.readlines()
 questionsList = [x.strip() for x in questionsList]
 
 for question in questionsList:
-  print(question)
-  CosineSim("set3/a1.txt", question)
-
-
-
-
-# question = "Where was Donovan born?"
-# sentence = nlp(unicode(question))
-# for word in sentence:
-#     print(word.text, word.pos_, word.dep_, word.head.text)
+    print(question)
+    sentences = CosineSim("set3/a1.txt", question)
+    sentences.filterRelevSentences()
