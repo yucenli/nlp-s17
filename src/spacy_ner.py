@@ -5,9 +5,12 @@ import re
 import sys
 import string
 from collections import Counter
+import grammar_check
 
 reload(sys)
 sys.setdefaultencoding('utf8')
+tool = grammar_check.LanguageTool('en-US')
+
 def removeParentheses(sentence):
     pCounter = 0
     newSentence = ""
@@ -23,6 +26,12 @@ def removeParentheses(sentence):
     newSentence = re.sub('\/([^\)]+)\/', '', newSentence)
     return newSentence
 
+def format_question(question):
+    matches = tool.check(unicode(question))
+    return grammar_check.correct(unicode(question), matches)
+
+def gscore(question):
+    return float(-len(tool.check(unicode(question))))
 
 class NER(object):
 
@@ -57,27 +66,29 @@ class NER(object):
                 words.append(word.lemma_)
 
         count = Counter(words)
-        
-        for sent in doc.sents:
 
+        for sent in doc.sents:
             rel = 0
             for word in sent:
                 rel += count.get(word.lemma_, 0)
 
             rel = rel/float(len(sent))
 
+            # What questions
             if (sent.root.lemma_ == "be"):
                 for r in sent.root.rights:
                     join = ' '.join(w.text for w in r.subtree)
                     if join[-1] == ",":
                         join = join[:-2]
-                    questions.append(("What " + sent.root.text + " " + join + "?", rel))
+                    what_question_1 = "What " + sent.root.text + " " + join + "?"
+                    questions.append((format_question(what_question_1), rel+gscore(what_question_1)))
                     break
                 for r in sent.root.lefts:
                     join = ' '.join(w.text for w in r.subtree)
                     if join[-1] == ",":
                         join = join[:-2]
-                    questions.append(("What " + sent.root.text + " " + join + "?", rel))
+                    what_question_2 = "What " + sent.root.text + " " + join + "?"
+                    questions.append((format_question(what_question_2), rel+gscore(what_question_2)))
 
             # Who questions
             subject = ["he", "she"]
@@ -97,17 +108,19 @@ class NER(object):
                             break
                     end = Span(doc, i + sent.start, sent.end-1)
                     if (len(start) == 0):
-                        print "Who " + end.text + "?"
-                        questions.append(("Who " + end.text + "?", rel))
+                        # print "Who " + end.text + "?"
+                        who_question = "Who " + end.text + "?"
+                        questions.append((format_question(who_question), rel+gscore(who_question)))
                     else:
-                        print start.text + " who " + end.text + "?"
-                        questions.append(("Who " + end.text + "?", rel))
+                        # print start.text + " who " + end.text + "?"
+                        who_question = start.text + " who " + end.text + "?"
+                        questions.append((format_question(who_question), rel+gscore(who_question)))
                     break
 
             # When questions
             # Only works when original sentence is "In ____, blah blah."
             for i in range(0, len(sent)-1):
-                if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"): 
+                if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"):
                     hi = Span(doc, sent.start, i+sent.start)
                     head = sent[i].head
                     while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
@@ -127,13 +140,14 @@ class NER(object):
                             final = final + sent.root.lemma_ + " "
                         else:
                             final = final + token.orth_ + " "
-                    print final[:-1] + "?"
-                    questions.append((final[:-1] + "?", rel))
-                    when.append((final[:-1] + "?", rel))
+                    # print final[:-1] + "?"
+                    when_question_1 = final[:-1] + "?"
+                    questions.append((when_question_1, rel+gscore(when_question_1)))
+                    when.append((when_question_1, rel+gscore(when_question_1)))
                     break
 
             for i in range(0, len(sent)-1):
-                if (sent[i].ent_type_ == "DATE"): 
+                if (sent[i].ent_type_ == "DATE"):
                     if (i > 0):
                         front = Span(doc, sent.start, i+sent.start-1)
                     else:
@@ -163,12 +177,13 @@ class NER(object):
                                 final = final + sent.root.lemma_ + " "
                             else:
                                 final = final + token.orth_ + " "
-                        print final[:-1] + "?"
-                        questions.append((final[:-1] + "?", rel))
-                        when.append((final[:-1] + "?", rel))
+                        # print final[:-1] + "?"
+                        when_question_2 = final[:-1] + "?"
+                        questions.append((when_question_2, rel+gscore(when_question_2)))
+                        when.append((when_question_2, rel+gscore(when_question_2)))
                     break
 
-            # possible_locations = []
+            # Where questions
             for i in range(0, len(sent)-1):
                 # if (sent[i].ent_type_ == "GPE" and sent[i-1].ent_type_ != "GPE"):
                 if (sent[i].ent_type_ == "GPE" and sent[i-1].ent_type_ != "GPE" and sent[i-1].tag_ == "IN"):
@@ -182,7 +197,6 @@ class NER(object):
                     i = j
 
                     for r in sent.root.rights:
-
                         if sent.root.lemma_ == "be":
                             final = "Where was "
                         elif sent.root.tag_ == "VB":
@@ -201,8 +215,9 @@ class NER(object):
                         final += subject + " " + sent.root.lemma_ + " " + ' '.join(w.text for w  in r.subtree) + "?"
                         break
                     final = final.replace(oneloc, "")
-                    print final[:-1] + "?"
-                    print ""
+                    where_question = final[:-1] + "?"
+                    questions.append((where_question, rel+gscore(where_question)))
+                    # print ""
                     break
 
         # DO/ DID DOES HAVE questions
@@ -217,9 +232,9 @@ class NER(object):
                         v_question = 'Did'
                     elif sent.root.tag_ == 'VBZ':
                         v_question = 'Does'
-                    elif sent.root.tag_ == 'VBN':
-                        v_question = 'Have'
                     elif sent.root.tag_ == 'VBP':
+                        v_question = 'Have'
+                    elif sent.root.tag_ == 'VBN':
                         break
                     else:
                         break
@@ -236,12 +251,12 @@ class NER(object):
                     v_question += " " + subject + " " + sent.root.lemma_ + " " +' '.join(w.text for w in r.subtree) + '?'
                     break
 
-                print v_question
-                print ""
+                # print v_question
+                questions.append((v_question, rel+gscore(v_question)))
+                # print ""
 
         # Is Was Were Questions
             if (sent.root.lemma_ == "be"):
-                print sent
                 for r in sent.root.rights:
                     if sent.root.text == '\'s':
                         isquest1 == 'Is'
@@ -251,10 +266,12 @@ class NER(object):
                         isquest1 += " " + ' '.join(w.text for w in l.subtree)
                     isquest1 += ' ' +' '.join(w.text for w in r.subtree) +'?'
                     break
-                print isquest1
-                print ""
-        for i in range(0, 10):
-            print ""
+                # print isquest1
+                questions.append((isquest1, rel+gscore(isquest1)))
+                # print ""
+
+        # for i in range(0, 10):
+        #     print ""
 
 
         questions = sorted(questions, key=lambda x: x[1], reverse=True)
