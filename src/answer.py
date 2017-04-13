@@ -4,13 +4,26 @@ import os
 import re
 import sys
 from collections import Counter, defaultdict
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.metrics.pairwise import linear_kernel
 
 nlp = spacy.load('en')
 
 reload(sys)
 sys.setdefaultencoding('utf8')
+
+
+def main():
+
+    inputs = sys.argv[1:]
+    txt_file = inputs[0]
+    question_file = inputs[1]
+
+    with open(question_file) as f:
+        questionsList = f.readlines()
+    questionsList = [x.strip() for x in questionsList]
+
+    for question in questionsList:
+        # print(question)
+        CosineSim(txt_file, question)
 
 
 def removeParentheses(sentence):
@@ -140,42 +153,56 @@ class CosineSim(object):
     def getRoot(self):
         sentence = nlp(unicode(self.question))
         root = [w for w in sentence if w.head is w][0]
-        self.root = root
+        self.root = root.lemma_.lower()
 
     def answerQuestion(self):
         firstSentScore = self.sentSimCount[self.sortSentSimCount[0]]
         secSentScore = self.sentSimCount[self.sortSentSimCount[1]]
         if (firstSentScore - secSentScore > 0.1):
-            print(self.sortSentSimCount[0])
             self.determineQuestion(self.sortSentSimCount[0])
         else:
-            for i in xrange(10):
-                sent = self.sortSentSimCount[i]
-                # print(sent, self.sentSimCount[sent])
+            relevSentences = self.filterByRoot(self.sortSentSimCount[:10])
+            for sent in relevSentences:
                 self.determineQuestion(sent)
-        self.filterAnswers()
-        print('*' * 50)
+        if not self.answers:
+            self.answers.append(self.sortSentSimCount[0])
+        self.printAnswers()
+        # print('*' * 75)
 
-    def filterAnswers(self):
-        for a in self.answers:
-            if a:
-                print a
+    def filterByRoot(self, sentences):
+        filteredSentences = []
+        for sent in sentences:
+            doc = nlp(unicode(sent))
+            for token in doc:
+                if token.lemma_.lower() == self.root:
+                    filteredSentences.append(sent)
+                    break
+        return(filteredSentences)
+
+    def printAnswers(self):
+        for a in self.answers[:1]:
+            print(a)
 
     def determineQuestion(self, sentence):
         questionDoc = nlp(unicode(self.question))
+        questionTypeFound = False
         for word in questionDoc:
             if word.text.lower() == "who":
                 self.answerWho(sentence)
-                break
+                questionTypeFound = True
             elif word.text.lower() == "where":
                 self.answerWhere(sentence)
-                break
-        self.answers.append("")
+                questionTypeFound = True
+            elif word.text.lower() == "when":
+                self.answerWhen(sentence)
+                questionTypeFound = True
+        if not questionTypeFound:
+            self.answers.append(sentence)
 
     def answerWho(self, sentence):
         doc = nlp(unicode(sentence))
         for ent in doc.ents:
-            if (ent.label_ in ["PERSON", "ORG", "EVENT"]) and (ent.text not in self.question):
+            if (ent.label_ == "PERSON") and (ent.text not in self.question):
                 self.answers.append(ent.text)
 
     def answerWhere(self, sentence):
@@ -184,71 +211,12 @@ class CosineSim(object):
             if (ent.label_ == "GPE") and (ent.text not in self.question):
                 self.answers.append(ent.text)
 
-
-class CosineSim1(object):
-
-    def __init__(self, txt_path, question):
-        super(CosineSim1, self).__init__()
-
-        cur_path = os.path.dirname(__file__)
-        rel_path = '../data/' + txt_path
-        f_path = os.path.join(cur_path, rel_path)
-        with open(f_path, 'r') as f:
-            txt = f.readlines()
-
-        txt = [x.strip() for x in txt]
-
-        sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
-        regex = re.compile(sentence_regex)
-
-        txt = [x for x in txt if regex.search(x)]
-        txt = removeSemiColons(txt)
-        txt = ''.join(str(elem) for elem in txt)
-        self.txt = txt
-        self.sentences = []
-        doc = nlp(unicode(txt))
-        for sent in doc.sents:
-            self.sentences.append(sent.string)
-        tfidf = TfidfVectorizer().fit_transform(self.sentences)
-        tfidfQ = TfidfVectorizer().fit_transform([question])
-        cosine_similarities = linear_kernel(tfidfQ, tfidf).flatten()
-        related_docs_indices = cosine_similarities.argsort()[-5:-1]
-        for i in related_docs_indices:
-            print(self.sentences[related_docs_indices[i]])
+    def answerWhen(self, sentence):
+        doc = nlp(unicode(sentence))
+        for ent in doc.ents:
+            if (ent.label_ in ["DATE", "TIME"]) and (ent.text not in self.question):
+                self.answers.append(ent.text)
 
 
-# question = "Who selected Clint Dempsey eighth overall in the 2004 MLS SuperDraft?"
-
-# sentence = nlp(unicode(question))
-# root = [w for w in sentence if w.head is w][0]
-# print root.text.lower()
-# print root.lemma_
-
-# print question
-
-# txt = CosineSim("set1/a1.txt", question)
-
-
-question = "Where was Dempsey born?"
-# question = "Who is Dempsey married to?"
-txt = CosineSim("set1/a1.txt", question)
-
-
-
-# question = "Who composed the Slumdog Millionaire soundtrack?"
-# print(question)
-# sentence = nlp(unicode(question))
-
-# for word in sentence:
-#     print(word.text, word.pos_, word.dep_, word.head.text)
-
-# txt = CosineSim("set4/a3.txt", question)
-
-
-# with open("who_questions.txt") as f:
-#     questionsList = f.readlines()
-# questionsList = [x.strip() for x in questionsList]
-
-# for question in questionsList:
-#     print(question)
-#     sentences = CosineSim("set4/a4.txt", question)
+if __name__ == '__main__':
+    main()
