@@ -11,8 +11,8 @@ import grammar_check
 
 reload(sys)
 sys.setdefaultencoding('utf8')
-
 tool = grammar_check.LanguageTool('en-US')
+tool = language_check.LanguageTool('en-US')
 
 textFile = sys.argv[1]
 qNum = int(sys.argv[2])
@@ -32,12 +32,33 @@ def removeParentheses(sentence):
     newSentence = re.sub('\/([^\)]+)\/', '', newSentence)
     return newSentence
 
+def find_subject(sent):
+    np_lab1 = ['nsubj', 'nsubjpass']
+    np_lab2 = ['dobj', 'iobj', 'pobj']
+    subject = ""
+    for i in range(0, len(sent)-1):
+        if sent[i].dep_ == 'nsubj' and sent[i].head.dep_ == "ROOT":
+            subject = sent[i].orth_
+            break
+        elif sent[i].dep_ == 'nsubjpass' and sent[i].head.dep_ == "ROOT":
+            subject = sent[i].orth_
+            break
+        elif sent[i].dep_ in np_lab1:
+            subject = sent[i].orth_
+            break
+        elif sent[i].dep_ in np_lab2:
+            subject = sent[i].orth_
+            break
+    if subject == "":
+        subject = "UNKNOWN"
+    return subject
+
 def format_question(question):
     matches = tool.check(unicode(question))
     return grammar_check.correct(unicode(question), matches)
 
-def gscore(question):
-    return float(-len(tool.check(unicode(question))))
+# def gscore(question):
+#     return float(-len(tool.check(unicode(question))))
 
 class NER(object):
 
@@ -87,14 +108,18 @@ class NER(object):
                     if join[-1] == ",":
                         join = join[:-2]
                     what_question_1 = "What " + sent.root.text + " " + join + "?"
-                    questions.append((format_question(what_question_1), rel+gscore(what_question_1)))
+                    # what_question_1 = format_question(what_question_1)
+                    # questions.append((what_question_1, rel+gscore(what_question_1)))
+                    questions.append((what_question_1, rel))
                     break
                 for r in sent.root.lefts:
                     join = ' '.join(w.text for w in r.subtree)
                     if join[-1] == ",":
                         join = join[:-2]
                     what_question_2 = "What " + sent.root.text + " " + join + "?"
-                    questions.append((format_question(what_question_2), rel+gscore(what_question_2)))
+                    # what_question_2 = format_question(what_question_2)
+                    # questions.append((what_question_2, rel+gscore(what_question_2)))
+                    questions.append((what_question_2, rel))
 
             # Who questions
             subject = ["he", "she"]
@@ -114,13 +139,15 @@ class NER(object):
                             break
                     end = Span(doc, i + sent.start, sent.end-1)
                     if (len(start) == 0):
-                        # print "Who " + end.text + "?"
                         who_question = "Who " + end.text + "?"
-                        questions.append((format_question(who_question), rel+gscore(who_question)))
+                        # who_question = format_question(who_question)
+                        # questions.append((who_question, rel+gscore(who_question)))
+                        questions.append((who_question, rel))
                     else:
-                        # print start.text + " who " + end.text + "?"
-                        who_question = start.text + " who " + end.text + "?"
-                        questions.append((format_question(who_question), rel+gscore(who_question)))
+                        who_question = "Who " + end.text + "?"
+                        # who_question = format_question(who_question)
+                        # questions.append((who_question, rel+gscore(who_question)))
+                        questions.append((who_question, rel))
                     break
 
             # When questions
@@ -146,10 +173,10 @@ class NER(object):
                             final = final + sent.root.lemma_ + " "
                         else:
                             final = final + token.orth_ + " "
-                    # print final[:-1] + "?"
                     when_question_1 = final[:-1] + "?"
-                    questions.append((when_question_1, rel+gscore(when_question_1)))
-                    when.append((when_question_1, rel+gscore(when_question_1)))
+                    # when_question_1 = format_question(when_question_1)
+                    questions.append((when_question_1, rel))
+                    when.append((when_question_1, rel))
                     break
 
             for i in range(0, len(sent)-1):
@@ -183,10 +210,10 @@ class NER(object):
                                 final = final + sent.root.lemma_ + " "
                             else:
                                 final = final + token.orth_ + " "
-                        # print final[:-1] + "?"
                         when_question_2 = final[:-1] + "?"
-                        questions.append((when_question_2, rel+gscore(when_question_2)))
-                        when.append((when_question_2, rel+gscore(when_question_2)))
+                        # when_question_2 = format_question(when_question_2)
+                        questions.append((when_question_2, rel))
+                        when.append((when_question_2, rel))
                     break
 
             # Where questions
@@ -222,72 +249,106 @@ class NER(object):
                         break
                     final = final.replace(oneloc, "")
                     where_question = final[:-1] + "?"
-                    questions.append((where_question, rel+gscore(where_question)))
+                    where_question = format_question(where_question)
+                    questions.append((where_question, rel))
                     # print ""
                     break
 
         # DO/ DID DOES HAVE questions
-            if (sent.root.pos_ == "VERB"):
-                # print sent.root.tag_
-                v_question = ""
-                for r in sent.root.rights:
-
-                    if sent.root.tag_ == 'VB':
-                        v_question = 'Do'
-                    elif sent.root.tag_ == 'VBD':
-                        v_question = 'Did'
-                    elif sent.root.tag_ == 'VBZ':
-                        v_question = 'Does'
-                    elif sent.root.tag_ == 'VBP':
-                        v_question = 'Have'
-                    elif sent.root.tag_ == 'VBN':
-                        break
+            # print sent
+            # final = ""
+            # front = ""
+            # end = ""
+            for i in range(0, len(sent)-1):
+                if sent[i] == sent.root and (sent[i-1].pos_ == 'VERB'):
+                    if (i > 0):
+                        front = Span(doc, sent.start, i+sent.start-1)
                     else:
-                        break
+                        font = []
+                    end = Span(doc, sent.start + i +1, sent.end-1)
+                    # print sent[i-1], sent[i], sent[i-1].tag_, sent[i].tag_
+                    if sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ != "be"  :
+                        vquest1 = "Have"+ " " + find_subject(sent) + " "+ sent[i].lemma_
+                        vquest2 = "Have"+ " " + str(front) + " "+ sent[i].lemma_
 
-                    subject =''
-                    for l in sent.root.lefts:
-                        if l.right_edge.dep_=='nsubj':
-                            subject = str(l.right_edge)
-                            break
-                        elif v_question == 'Have':
-                            subject =  ' '.join(w.text for w in l.subtree)
-                            break
-                        else:  subject =  ' '.join(w.text for w in l.subtree)
-                    v_question += " " + subject + " " + sent.root.lemma_ + " " +' '.join(w.text for w in r.subtree) + '?'
+                    elif sent[i-1].tag_ == "VBD" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ == "be":
+                        vquest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].orth_
+                        vquest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].orth_
+
+                    elif sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ == "be":
+                        vquest1 = "Was" + " " + find_subject(sent) + " " + sent[i].orth_
+                        vquest2 = "Was" + " " + str(front) + " " + sent[i].orth_
+
+                    elif sent[i-1].tag_ == "MD" and sent[i].tag_ == "VB":
+                        vquest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
+                        vquest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].lemma_
+
+                    vquest1 += " " + str(end) + " ?"
+                    vquest2 += " " + str(end) + " ?"
+                    # vquest1 = format_question(vquest1)
+                    # vquest2 = format_question(vquest2)
+                    questions.append((vquest1, rel))
+                    questions.append((vquest2, rel))
+                    break
+                    # print vquest2
+                    # print vquest1
+                    # break
+
+                elif sent[i] == sent.root:
+                    # print sent[i], sent[i].tag_
+                    if (i > 0):
+                        front = Span(doc, sent.start, i+sent.start)
+                    else:
+                        font = []
+                    end = Span(doc, sent.start+i+1, sent.end-1)
+
+                    if sent[i].tag_ == "VBD" and sent[i].lemma_ != "be":
+                        vquest1 = "Did"+ " " + find_subject(sent) + " " + sent[i].lemma_
+                        vquest2 = "Did"+ " " + str(front) + " " + sent[i].lemma_
+
+                    elif sent[i].tag_ == "VBZ" and sent[i].lemma_ != "be":
+                        vquest1 = "Does"+ " " + find_subject(sent) + " " + sent[i].lemma_
+                        vquest2 = "Does"+ " " + str(front) + " " + sent[i].lemma_
+
+                    elif sent[i].tag_ == "VBP" or sent[i].tag_ == "VB":
+                        vquest1 = "Do"+ " " + find_subject(sent) + " " + sent[i].lemma_
+                        vquest2 = "Do"+ " " + str(front) + " " + sent[i].lemma_
+
+                    elif sent[i].tag_ == "VBZ" and sent[i].lemma_ == "be":
+                        vquest1 = sent[i].orth_ + " " + find_subject(sent)
+                        vquest2 = sent[i].orth_ + " " + str(front)
+
+                    elif sent[i].tag_ == "VBD" and sent[i].lemma_ == "be":
+                        vquest1 = "Was"+ " " + find_subject(sent)
+                        vquest2 = "Was"+ " " + str(front)
+
+                    elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "be":
+                        vquest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
+                        vquest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+
+                    elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "have":
+                        vquest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
+                        vquest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+
+                    vquest1 += " " + str(end) + " ?"
+                    vquest2 += " " + str(end) + " ?"
+                    # vquest1 = format_question(vquest1)
+                    # vquest2 = format_question(vquest2)
+                    questions.append((vquest1, rel))
+                    questions.append((vquest2, rel))
                     break
 
-                # print v_question
-                questions.append((v_question, rel+gscore(v_question)))
-                # print ""
-
-        # Is Was Were Questions
-            if (sent.root.lemma_ == "be"):
-                for r in sent.root.rights:
-                    if sent.root.text == '\'s':
-                        isquest1 == 'Is'
-                    else:
-                        isquest1 = sent.root.text.capitalize()
-                    for l in sent.root.lefts:
-                        isquest1 += " " + ' '.join(w.text for w in l.subtree)
-                    isquest1 += ' ' +' '.join(w.text for w in r.subtree) +'?'
-                    break
-                # print isquest1
-                questions.append((isquest1, rel+gscore(isquest1)))
-                # print ""
 
         questions = sorted(questions, key=lambda x: x[1], reverse=True)
         goodQuestions = []
         for q in questions:
-            if q[0].count(' ') > 3:
+            if (q[0].count(' ') > 3) :
                 sentence = q[0]
                 matches = tool.check(sentence)
-                if len(matches) == 0:
-                    goodQuestions.append(q[0])
+                if len(matches)==0:
+                    goodQuestions.append(sentence)
 
-        for i in range(0, qNum):
-            if (i*4) < len(goodQuestions)
-                print goodQuestions[i*4]
-
+        for i in range(0,qNum):
+            print goodQuestions[i*4]
 
 txt = NER(textFile)
