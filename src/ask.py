@@ -86,6 +86,8 @@ class NER(object):
 
         questions = []
         when = []
+        who = []
+        new = []
 
         words = []
         for word in doc:
@@ -100,6 +102,11 @@ class NER(object):
                 rel += count.get(word.lemma_, 0)
 
             rel = rel/float(len(sent))
+
+            if sent[0].text == "This":
+                remain = Span(doc, sent.start+1, sent.end-1)
+                questions.append(("What " + remain.text + "?", rel+10))
+                new.append(("What " + remain.text + "?", rel))
 
             # What questions
             if (sent.root.lemma_ == "be"):
@@ -143,11 +150,13 @@ class NER(object):
                         # who_question = format_question(who_question)
                         # questions.append((who_question, rel+gscore(who_question)))
                         questions.append((who_question, rel))
+                        who.append(who_question)
                     else:
                         who_question = "Who " + end.text + "?"
                         # who_question = format_question(who_question)
                         # questions.append((who_question, rel+gscore(who_question)))
                         questions.append((who_question, rel))
+                        who.append(who_question)
                     break
 
             # When questions
@@ -179,6 +188,7 @@ class NER(object):
                     when.append((when_question_1, rel))
                     break
 
+            # TODO: check if noun after when did
             for i in range(0, len(sent)-1):
                 if (sent[i].ent_type_ == "DATE"):
                     if (i > 0):
@@ -226,7 +236,6 @@ class NER(object):
                     while j < len(sent)-1 and sent[j+1].ent_type_ == "GPE":
                         oneloc += " " + str(sent[j+1])
                         j = j + 1
-                    # possible_locations.append(oneloc)
                     i = j
 
                     for r in sent.root.rights:
@@ -244,6 +253,10 @@ class NER(object):
                                 subject = str(l.right_edge)
                                 break
                             else:
+                                if token.ent_type_ == "":
+                                    final = final + token.lower_ + " "
+                                else:
+                                    final = final + token.text + " "
                                 subject =  ' '.join(w.text for w in l.subtree)
                         final += subject + " " + sent.root.lemma_ + " " + ' '.join(w.text for w  in r.subtree) + "?"
                         break
@@ -255,10 +268,6 @@ class NER(object):
                     break
 
         # DO/ DID DOES HAVE questions
-            # print sent
-            # final = ""
-            # front = ""
-            # end = ""
             for i in range(0, len(sent)-1):
                 if sent[i] == sent.root and (sent[i-1].pos_ == 'VERB'):
                     if (i > 0):
@@ -287,12 +296,9 @@ class NER(object):
                     vquest2 += " " + str(end) + " ?"
                     # vquest1 = format_question(vquest1)
                     # vquest2 = format_question(vquest2)
-                    questions.append((vquest1, rel))
-                    questions.append((vquest2, rel))
+                    #questions.append((vquest1, rel))
+                    #questions.append((vquest2, rel))
                     break
-                    # print vquest2
-                    # print vquest1
-                    # break
 
                 elif sent[i] == sent.root:
                     # print sent[i], sent[i].tag_
@@ -301,6 +307,8 @@ class NER(object):
                     else:
                         font = []
                     end = Span(doc, sent.start+i+1, sent.end-1)
+                    vquest1 = ""
+                    vquest2 = ""
 
                     if sent[i].tag_ == "VBD" and sent[i].lemma_ != "be":
                         vquest1 = "Did"+ " " + find_subject(sent) + " " + sent[i].lemma_
@@ -334,10 +342,9 @@ class NER(object):
                     vquest2 += " " + str(end) + " ?"
                     # vquest1 = format_question(vquest1)
                     # vquest2 = format_question(vquest2)
-                    questions.append((vquest1, rel))
-                    questions.append((vquest2, rel))
+                    #questions.append((vquest1, rel))
+                    #questions.append((vquest2, rel))
                     break
-
 
         questions = sorted(questions, key=lambda x: x[1], reverse=True)
         goodQuestions = []
@@ -348,7 +355,22 @@ class NER(object):
                 if len(matches)==0:
                     goodQuestions.append(sentence)
 
-        for i in range(0,qNum):
-            print goodQuestions[i*4]
+        count = 0
+        new = sorted(new, key=lambda x: x[1], reverse=True)
+        for i in range(0, len(new)):
+            if count < i: 
+                print new[i][0]
+
+        for i in range(0, 4):
+            for j in range(0, len(goodQuestions)/4):
+                if count < qNum:
+                    count = count+1
+                    print goodQuestions[j*4+i] 
+
+        for i in range(0, 10):
+            print ""
+
+        for q in who:
+            print q
 
 txt = NER(textFile)
