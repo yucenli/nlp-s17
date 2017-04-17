@@ -1,18 +1,18 @@
 import spacy
 from spacy.tokens.span import Span
-from nltk.parse.stanford import StanfordParser
+# from nltk.parse.stanford import StanfordParser
 import os
 import re
 import sys
-import string
+# import string
 from collections import Counter
-import language_check
+# import language_check
 import grammar_check
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 tool = grammar_check.LanguageTool('en-US')
-tool = language_check.LanguageTool('en-US')
+# tool = language_check.LanguageTool('en-US')
 
 textFile = sys.argv[1]
 qNum = int(sys.argv[2])
@@ -370,7 +370,7 @@ class NER(object):
         for i in range(0, 10):
             print ""
 
-        for q in who:
-            print q
+        # for q in who:
+        #     print q
 
 txt = NER(textFile)
