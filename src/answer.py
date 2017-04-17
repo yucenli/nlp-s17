@@ -22,8 +22,12 @@ def main():
     questionsList = [x.strip() for x in questionsList]
 
     for question in questionsList:
-        # print(question)
+        print(question)
+        print("ANSWERS:")
+        print("*" * 80)
         CosineSim(txt_file, question)
+        print("*" * 80)
+        print
 
 
 def removeParentheses(sentence):
@@ -159,10 +163,12 @@ class CosineSim(object):
         firstSentScore = self.sentSimCount[self.sortSentSimCount[0]]
         secSentScore = self.sentSimCount[self.sortSentSimCount[1]]
         if (firstSentScore - secSentScore > 0.1):
+            print(self.sortSentSimCount[0])
             self.determineQuestion(self.sortSentSimCount[0])
         else:
             relevSentences = self.filterByRoot(self.sortSentSimCount[:10])
             for sent in relevSentences:
+                print(sent)
                 self.determineQuestion(sent)
         if not self.answers:
             self.answers.append(self.sortSentSimCount[0])
@@ -180,7 +186,8 @@ class CosineSim(object):
         return(filteredSentences)
 
     def printAnswers(self):
-        for a in self.answers[:1]:
+        # for a in self.answers[:1]:
+        for a in self.answers:
             print(a)
 
     def determineQuestion(self, sentence):
