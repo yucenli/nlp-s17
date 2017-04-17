@@ -346,14 +346,20 @@ class NER(object):
                     #questions.append((vquest2, rel))
                     break
 
+        pronouns = ["he","He", "she", "his", "her"]
         questions = sorted(questions, key=lambda x: x[1], reverse=True)
         goodQuestions = []
+        goodPronouns = []
         for q in questions:
-            if (q[0].count(' ') > 3) :
+            if (q[0].count(' ') > 3):
                 sentence = q[0]
                 matches = tool.check(sentence)
                 if len(matches)==0:
-                    goodQuestions.append(sentence)
+                    words = q[0].split()
+                    if not any(p == w for w in words for p in pronouns):
+                        goodQuestions.append(sentence)
+                    else:
+                        goodPronouns.append(sentence)
 
         count = 0
         new = sorted(new, key=lambda x: x[1], reverse=True)
@@ -367,10 +373,10 @@ class NER(object):
                     count = count+1
                     print goodQuestions[j*4+i] 
 
-        for i in range(0, 10):
-            print ""
-
-        for q in who:
-            print q
+        for i in range(0, 4):
+            for j in range(0, len(goodPronouns)/4):
+                if count < qNum:
+                    count = count+1
+                    print goodPronouns[j*4+i] 
 
 txt = NER(textFile)
