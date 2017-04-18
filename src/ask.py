@@ -39,22 +39,22 @@ def find_subject(sent):
     for i in range(0, len(sent)-1):
         if sent[i].dep_ == 'nsubj' and sent[i].head.dep_ == "ROOT":
             subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
+            if sent[i].pos == "PRON":
                 subject = subject.lower()
             break
         elif sent[i].dep_ == 'nsubjpass' and sent[i].head.dep_ == "ROOT":
             subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
+            if sent[i].pos == "PRON":
                 subject = subject.lower()
             break
         elif sent[i].dep_ in np_lab1:
             subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
+            if sent[i].pos == "PRON":
                 subject = subject.lower()
             break
         elif sent[i].dep_ in np_lab2:
             subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
+            if sent[i].pos == "PRON":
                 subject = subject.lower()
             break
     if subject == "":
