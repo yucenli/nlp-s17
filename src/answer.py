@@ -22,12 +22,7 @@ def main():
     questionsList = [x.strip() for x in questionsList]
 
     for question in questionsList:
-        print(question)
-        print("ANSWERS:")
-        print("*" * 80)
         CosineSim(txt_file, question)
-        print("*" * 80)
-        print
 
 
 def removeParentheses(sentence):
@@ -163,17 +158,13 @@ class CosineSim(object):
         firstSentScore = self.sentSimCount[self.sortSentSimCount[0]]
         secSentScore = self.sentSimCount[self.sortSentSimCount[1]]
         if (firstSentScore - secSentScore > 0.1):
-            print(self.sortSentSimCount[0])
             self.determineQuestion(self.sortSentSimCount[0])
         else:
-            relevSentences = self.filterByRoot(self.sortSentSimCount[:10])
-            for sent in relevSentences:
-                print(sent)
-                self.determineQuestion(sent)
+            relevSentences = self.filterByRoot(self.sortSentSimCount[:20])
+            self.determineQuestion(relevSentences)
         if not self.answers:
             self.answers.append(self.sortSentSimCount[0])
         self.printAnswers()
-        # print('*' * 75)
 
     def filterByRoot(self, sentences):
         filteredSentences = []
@@ -185,44 +176,70 @@ class CosineSim(object):
                     break
         return(filteredSentences)
 
+    def getDistance(self, doc, word):
+        rootWordIdx = 0
+        wordIdx = 0
+        for token in doc:
+            if token.lemma_ == self.root:
+                rootWordIdx = token.i
+            elif token.text == word:
+                wordIdx = token.i
+        return(abs(wordIdx - rootWordIdx))
+
     def printAnswers(self):
-        # for a in self.answers[:1]:
-        for a in self.answers:
+        for a in self.answers[:1]:
             print(a)
 
-    def determineQuestion(self, sentence):
+    def sortAnswers(self, answers):
+        sortedAnswers = sorted(answers, key=lambda x: x[1])
+        return(map((lambda x: x[0]), sortedAnswers))
+
+    def determineQuestion(self, sentences):
         questionDoc = nlp(unicode(self.question))
         questionTypeFound = False
         for word in questionDoc:
             if word.text.lower() == "who":
-                self.answerWho(sentence)
+                self.answerWho(sentences)
                 questionTypeFound = True
             elif word.text.lower() == "where":
-                self.answerWhere(sentence)
+                self.answerWhere(sentences)
                 questionTypeFound = True
             elif word.text.lower() == "when":
-                self.answerWhen(sentence)
+                self.answerWhen(sentences)
                 questionTypeFound = True
         if not questionTypeFound:
-            self.answers.append(sentence)
+            for sent in sentences:
+                self.answers.append(sent)
 
-    def answerWho(self, sentence):
-        doc = nlp(unicode(sentence))
-        for ent in doc.ents:
-            if (ent.label_ == "PERSON") and (ent.text not in self.question):
-                self.answers.append(ent.text)
+    def answerWho(self, sentences):
+        answers = []
+        for sentence in sentences:
+            doc = nlp(unicode(sentence))
+            for ent in doc.ents:
+                if (ent.label_ == "PERSON") and (ent.text not in self.question):
+                    answers.append((ent.text, self.getDistance(doc, ent.text)))
+        sortedAnswers = self.sortAnswers(answers)
+        self.answers += sortedAnswers
 
-    def answerWhere(self, sentence):
-        doc = nlp(unicode(sentence))
-        for ent in doc.ents:
-            if (ent.label_ == "GPE") and (ent.text not in self.question):
-                self.answers.append(ent.text)
+    def answerWhere(self, sentences):
+        answers = []
+        for sentence in sentences:
+            doc = nlp(unicode(sentence))
+            for ent in doc.ents:
+                if (ent.label_ == "GPE") and (ent.text not in self.question):
+                    answers.append((ent.text, self.getDistance(doc, ent.text)))
+        sortedAnswers = self.sortAnswers(answers)
+        self.answers += sortedAnswers
 
-    def answerWhen(self, sentence):
-        doc = nlp(unicode(sentence))
-        for ent in doc.ents:
-            if (ent.label_ in ["DATE", "TIME"]) and (ent.text not in self.question):
-                self.answers.append(ent.text)
+    def answerWhen(self, sentences):
+        answers = []
+        for sentence in sentences:
+            doc = nlp(unicode(sentence))
+            for ent in doc.ents:
+                if (ent.label_ in ["DATE", "TIME"]) and (ent.text not in self.question):
+                    answers.append((ent.text, self.getDistance(doc, ent.text)))
+        sortedAnswers = self.sortAnswers(answers)
+        self.answers += sortedAnswers
 
 
 if __name__ == '__main__':
