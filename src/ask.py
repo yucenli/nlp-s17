@@ -39,15 +39,23 @@ def find_subject(sent):
     for i in range(0, len(sent)-1):
         if sent[i].dep_ == 'nsubj' and sent[i].head.dep_ == "ROOT":
             subject = sent[i].orth_
+            if sent[i].pos_ == "PRON":
+                subject = subject.lower()
             break
         elif sent[i].dep_ == 'nsubjpass' and sent[i].head.dep_ == "ROOT":
             subject = sent[i].orth_
+            if sent[i].pos_ == "PRON":
+                subject = subject.lower()
             break
         elif sent[i].dep_ in np_lab1:
             subject = sent[i].orth_
+            if sent[i].pos_ == "PRON":
+                subject = subject.lower()
             break
         elif sent[i].dep_ in np_lab2:
             subject = sent[i].orth_
+            if sent[i].pos_ == "PRON":
+                subject = subject.lower()
             break
     if subject == "":
         subject = "UNKNOWN"
@@ -272,38 +280,46 @@ class NER(object):
                 if sent[i] == sent.root and (sent[i-1].pos_ == 'VERB'):
                     if (i > 0):
                         front = Span(doc, sent.start, i+sent.start-1)
+                        front_list = str(front).split()
+                        if front[0].ent_type_ == "":
+                            front_list[0] = front_list[0].lower()
+                        str_front = " ".join(front_list)
                     else:
                         font = []
                     end = Span(doc, sent.start + i +1, sent.end-1)
                     # print sent[i-1], sent[i], sent[i-1].tag_, sent[i].tag_
                     if sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ != "be"  :
                         vquest1 = "Have"+ " " + find_subject(sent) + " "+ sent[i].lemma_
-                        vquest2 = "Have"+ " " + str(front) + " "+ sent[i].lemma_
+                        vquest2 = "Have"+ " " + str_front + " "+ sent[i].lemma_
 
                     elif sent[i-1].tag_ == "VBD" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ == "be":
                         vquest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].orth_
-                        vquest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].orth_
+                        vquest2 = sent[i-1].orth_ + " " + str_front + " " + sent[i].orth_
 
                     elif sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ == "be":
                         vquest1 = "Was" + " " + find_subject(sent) + " " + sent[i].orth_
-                        vquest2 = "Was" + " " + str(front) + " " + sent[i].orth_
+                        vquest2 = "Was" + " " + str_front + " " + sent[i].orth_
 
                     elif sent[i-1].tag_ == "MD" and sent[i].tag_ == "VB":
                         vquest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-                        vquest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].lemma_
+                        vquest2 = sent[i-1].orth_ + " " + str_front + " " + sent[i].lemma_
 
                     vquest1 += " " + str(end) + " ?"
                     vquest2 += " " + str(end) + " ?"
                     # vquest1 = format_question(vquest1)
                     # vquest2 = format_question(vquest2)
-                    #questions.append((vquest1, rel))
-                    #questions.append((vquest2, rel))
+                    questions.append((vquest1, rel))
+                    questions.append((vquest2, rel))
                     break
 
                 elif sent[i] == sent.root:
                     # print sent[i], sent[i].tag_
                     if (i > 0):
                         front = Span(doc, sent.start, i+sent.start)
+                        front_list = str(front).split()
+                        if front[0].ent_type_ == "":
+                            front_list[0] = front_list[0].lower()
+                        str_front = " ".join(front_list)
                     else:
                         font = []
                     end = Span(doc, sent.start+i+1, sent.end-1)
@@ -312,38 +328,38 @@ class NER(object):
 
                     if sent[i].tag_ == "VBD" and sent[i].lemma_ != "be":
                         vquest1 = "Did"+ " " + find_subject(sent) + " " + sent[i].lemma_
-                        vquest2 = "Did"+ " " + str(front) + " " + sent[i].lemma_
+                        vquest2 = "Did"+ " " + str_front + " " + sent[i].lemma_
 
                     elif sent[i].tag_ == "VBZ" and sent[i].lemma_ != "be":
                         vquest1 = "Does"+ " " + find_subject(sent) + " " + sent[i].lemma_
-                        vquest2 = "Does"+ " " + str(front) + " " + sent[i].lemma_
+                        vquest2 = "Does"+ " " + str_front + " " + sent[i].lemma_
 
                     elif sent[i].tag_ == "VBP" or sent[i].tag_ == "VB":
                         vquest1 = "Do"+ " " + find_subject(sent) + " " + sent[i].lemma_
-                        vquest2 = "Do"+ " " + str(front) + " " + sent[i].lemma_
+                        vquest2 = "Do"+ " " + str_front + " " + sent[i].lemma_
 
                     elif sent[i].tag_ == "VBZ" and sent[i].lemma_ == "be":
                         vquest1 = sent[i].orth_ + " " + find_subject(sent)
-                        vquest2 = sent[i].orth_ + " " + str(front)
+                        vquest2 = sent[i].orth_ + " " + str_front
 
                     elif sent[i].tag_ == "VBD" and sent[i].lemma_ == "be":
                         vquest1 = "Was"+ " " + find_subject(sent)
-                        vquest2 = "Was"+ " " + str(front)
+                        vquest2 = "Was"+ " " + str_front
 
                     elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "be":
                         vquest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-                        vquest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+                        vquest2 = sent[i].orth_ + " " + str_front + " " + sent[i].lemma_
 
                     elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "have":
                         vquest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-                        vquest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+                        vquest2 = sent[i].orth_ + " " + str_front + " " + sent[i].lemma_
 
                     vquest1 += " " + str(end) + " ?"
                     vquest2 += " " + str(end) + " ?"
                     # vquest1 = format_question(vquest1)
                     # vquest2 = format_question(vquest2)
-                    #questions.append((vquest1, rel))
-                    #questions.append((vquest2, rel))
+                    questions.append((vquest1, rel))
+                    questions.append((vquest2, rel))
                     break
 
         pronouns = ["he","He", "she", "his", "her"]
@@ -353,13 +369,14 @@ class NER(object):
         for q in questions:
             if (q[0].count(' ') > 3):
                 sentence = q[0]
-                matches = tool.check(sentence)
-                if len(matches)==0:
-                    words = q[0].split()
-                    if not any(p == w for w in words for p in pronouns):
-                        goodQuestions.append(sentence)
-                    else:
-                        goodPronouns.append(sentence)
+                goodQuestions.append(sentence)
+                # matches = tool.check(sentence)
+                # if len(matches)==0:
+                #     words = q[0].split()
+                #     if not any(p == w for w in words for p in pronouns):
+                #         goodQuestions.append(sentence)
+                #     else:
+                #         goodPronouns.append(sentence)
 
         count = 0
         new = sorted(new, key=lambda x: x[1], reverse=True)

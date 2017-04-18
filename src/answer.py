@@ -82,8 +82,6 @@ class NER(object):
         self.relevSentences = []
         doc = nlp(unicode(txt))
         for sent in doc.sents:
-            # print(sent.string)
-            # print("\n")
             if (sent.root.lemma_ == q_root):
                 self.relevSentences.append(sent.string)
                 continue
