@@ -34,7 +34,6 @@ def removeParentheses(sentence):
 
 def find_subject(sent):
     np_lab1 = ['nsubj', 'nsubjpass']
-    np_lab2 = ['dobj', 'iobj', 'pobj']
     subject = ""
     for i in range(0, len(sent)-1):
         if sent[i].dep_ == 'nsubj' and sent[i].head.dep_ == "ROOT":
@@ -47,18 +46,10 @@ def find_subject(sent):
             if sent[i].pos_ == "PRON":
                 subject = subject.lower()
             break
-        elif sent[i].dep_ in np_lab1:
-            subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
-                subject = subject.lower()
-            break
-        elif sent[i].dep_ in np_lab2:
-            subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
-                subject = subject.lower()
-            break
+
     if subject == "":
         subject = "UNKNOWN"
+
     return subject
 
 def format_question(question):
@@ -66,80 +57,98 @@ def format_question(question):
     return grammar_check.correct(unicode(question), matches)
 
 def two_verbs(i, sent, doc):
+    front = ""
     if (i > 0):
         front = Span(doc, sent.start, i+sent.start-1)
-        front_list = str(front).split()
-        if len(front_list) > 0 and front[0].ent_type_ == "":
-            front_list[0] = front_list[0].lower()
-        str_front = " ".join(front_list)
-    else:
-        font = []
-    end = Span(doc, sent.start + i +1, sent.end-1)
+    end = Span(doc, sent.start+i+1, sent.end-1)
+
+    newfront = ""
+    for k in front:
+        if k.ent_type_ == "":
+            newfront += k.lower_ + " "
+        else:
+            newfront += k.text + " "
 
     quest1 = ""
     quest2 = ""
-
-    if sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ != "be"  :
-        quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " "+ sent[i].orth_
-        quest2 = sent[i-1].orth_ + " " + str(front) + " "+ sent[i].orth_
+    if sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ != "be":
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " "+ sent[i].orth_
+        quest2 = sent[i-1].orth_ + " " + str(newfront[:-1]) + " "+ sent[i].orth_
 
     elif sent[i-1].tag_ == "VBD" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ == "be":
-        quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].orth_
-        quest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].orth_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].orth_
+        quest2 = sent[i-1].orth_ + " " + str(newfront[:-1]) + " " + sent[i].orth_
+
+    elif sent[i-1].tag_ == "VBD" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ != "be":
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].orth_
+        quest2 = sent[i-1].orth_ + " " + str(newfront[:-1]) + " " + sent[i].orth_
 
     elif sent[i-1].tag_ == "VBZ" and sent[i].tag_ == "VBN" and sent[i-1].lemma_ == "be":
-        quest1 = "was" + " " + find_subject(sent) + " " + sent[i].orth_
-        quest2 = "was" + " " + str(front) + " " + sent[i].orth_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = "was" + " " + find_subject(sent) + " " + sent[i].orth_
+        quest2 = "was" + " " + str(newfront[:-1]) + " " + sent[i].orth_
 
     elif sent[i-1].tag_ == "MD" and sent[i].tag_ == "VB":
-        quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].lemma_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
+        quest2 = sent[i-1].orth_ + " " + str(newfront[:-1]) + " " + sent[i].lemma_
 
     quest1 += " " +str(end) + "?"
     quest2 += " " +str(end) + "?"
     return quest1, quest2
 
 def one_verb(i, sent, doc):
+    front = ""
     if (i > 0):
         front = Span(doc, sent.start, i+sent.start)
-        front_list = str(front).split()
-        if front[0].ent_type_ == "":
-            front_list[0] = front_list[0].lower()
-        str_front = " ".join(front_list)
-    else:
-        front = []
     end = Span(doc, sent.start+i+1, sent.end-1)
+
+    newfront = ""
+    for k in front:
+        if k.ent_type_ == "":
+            newfront += k.lower_ + " "
+        else:
+            newfront += k.text + " "
 
     quest1 = ""
     quest2 = ""
-
     if sent[i].tag_ == "VBD" and sent[i].lemma_ != "be":
-        quest1 = "did"+ " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = "did"+ " " + str(front) + " " + sent[i].lemma_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = "did"+ " " + find_subject(sent) + " " + sent[i].lemma_
+        quest2 = "did"+ " " + str(newfront[:-1]) + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBZ" and sent[i].lemma_ != "be":
-        quest1 = "does"+ " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = "does"+ " " + str(front) + " " + sent[i].lemma_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = "does"+ " " + find_subject(sent) + " " + sent[i].lemma_
+        quest2 = "does"+ " " + str(newfront[:-1]) + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBP" or sent[i].tag_ == "VB":
-        quest1 = "do"+ " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = "do"+ " " + str(front) + " " + sent[i].lemma_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = "do"+ " " + find_subject(sent) + " " + sent[i].lemma_
+        quest2 = "do"+ " " + str(newfront[:-1]) + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBZ" and sent[i].lemma_ == "be":
-        quest1 = sent[i].orth_ + " " + find_subject(sent)
-        quest2 = sent[i].orth_ + " " + str(front)
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i].orth_ + " " + find_subject(sent)
+        quest2 = sent[i].orth_ + " " + str(newfront[:-1])
 
     elif sent[i].tag_ == "VBD" and sent[i].lemma_ == "be":
-        quest1 = "was"+ " " + find_subject(sent)
-        quest2 = "was"+ " " + str(front)
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = "was"+ " " + find_subject(sent)
+        quest2 = "was"+ " " + str(newfront[:-1])
 
     elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "be":
-        quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
+        quest2 = sent[i].orth_ + " " + str(newfront[:-1]) + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "have":
-        quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+        if find_subject(sent) != "UNKNOWN":
+            quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
+        quest2 = sent[i].orth_ + " " + str(newfront[:-1]) + " " + sent[i].lemma_
 
     quest1 += " " + str(end) + "?"
     quest2 += " " + str(end) + "?"
