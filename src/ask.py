@@ -47,16 +47,6 @@ def find_subject(sent):
             if sent[i].pos_ == "PRON":
                 subject = subject.lower()
             break
-        elif sent[i].dep_ in np_lab1:
-            subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
-                subject = subject.lower()
-            break
-        elif sent[i].dep_ in np_lab2:
-            subject = sent[i].orth_
-            if sent[i].pos_ == "PRON":
-                subject = subject.lower()
-            break
     if subject == "":
         subject = "UNKNOWN"
     return subject
