@@ -66,11 +66,13 @@ def format_question(question):
     return grammar_check.correct(unicode(question), matches)
 
 def two_verbs(i, sent, doc):
+    str_front = ""
     if (i > 0):
         front = Span(doc, sent.start, i+sent.start-1)
         front_list = str(front).split()
         if front[0].ent_type_ == "":
-            front_list[0] = front_list[0].lower()
+            if len(front_list) != 0:
+                front_list[0] = front_list[0].lower()
         str_front = " ".join(front_list)
     else:
         font = []
@@ -100,11 +102,13 @@ def two_verbs(i, sent, doc):
     return quest1, quest2
 
 def one_verb(i, sent, doc):
+    str_front = ""
     if (i > 0):
         front = Span(doc, sent.start, i+sent.start)
         front_list = str(front).split()
         if front[0].ent_type_ == "":
-            front_list[0] = front_list[0].lower()
+            if len(front_list) != 0:
+                front_list[0] = front_list[0].lower()
         str_front = " ".join(front_list)
     else:
         font = []
@@ -115,31 +119,31 @@ def one_verb(i, sent, doc):
 
     if sent[i].tag_ == "VBD" and sent[i].lemma_ != "be":
         quest1 = "did"+ " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = "did"+ " " + str(front) + " " + sent[i].lemma_
+        quest2 = "did"+ " " + str_front + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBZ" and sent[i].lemma_ != "be":
         quest1 = "does"+ " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = "does"+ " " + str(front) + " " + sent[i].lemma_
+        quest2 = "does"+ " " + str_front + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBP" or sent[i].tag_ == "VB":
         quest1 = "do"+ " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = "do"+ " " + str(front) + " " + sent[i].lemma_
+        quest2 = "do"+ " " + str_front + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBZ" and sent[i].lemma_ == "be":
         quest1 = sent[i].orth_ + " " + find_subject(sent)
-        quest2 = sent[i].orth_ + " " + str(front)
+        quest2 = sent[i].orth_ + " " + str_front
 
     elif sent[i].tag_ == "VBD" and sent[i].lemma_ == "be":
         quest1 = "was"+ " " + find_subject(sent)
-        quest2 = "was"+ " " + str(front)
+        quest2 = "was"+ " " + str_front
 
     elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "be":
         quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+        quest2 = sent[i].orth_ + " " + str_front + " " + sent[i].lemma_
 
     elif sent[i].tag_ == "VBN" and sent[i].lemma_ == "have":
         quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
-        quest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
+        quest2 = sent[i].orth_ + " " + str_front + " " + sent[i].lemma_
 
     quest1 += " " + str(end) + " ?"
     quest2 += " " + str(end) + " ?"
@@ -305,7 +309,7 @@ class NER(object):
                         for token in end:
                             if verb.lemma_ == "be" and token.lemma_ == "be":
                                 final = final
-                            elif verb.lemma_ != "be" and token == sent.root:
+                            elif verb.lemma_ != "be":
                                 final = final + sent.root.lemma_ + " "
                             else:
                                 final = final + token.orth_ + " "
