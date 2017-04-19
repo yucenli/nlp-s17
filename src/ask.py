@@ -208,10 +208,12 @@ class NER(object):
                 for r in sent.root.rights:
                     join = ""
                     #join = ' '.join(w.text for w in r.subtree)
+                    first = True
                     for w in r.subtree:
-                        if w.ent_type_ == "":
+                        if first and w.ent_type_ == "":
                             join += ' ' + w.lower_
                         else:
+                            first = False
                             join += ' ' + w.text
                     if join[-1] == ",":
                         join = join[:-2]
@@ -224,10 +226,12 @@ class NER(object):
                 for r in sent.root.lefts:
                     join = ""
                     #join = ' '.join(w.text for w in r.subtree)
+                    first = True
                     for w in r.subtree:
-                        if w.ent_type_ == "":
+                        if first and w.ent_type_ == "":
                             join += ' ' + w.lower_
                         else:
+                            first = False
                             join += ' ' + w.text
                     if join[-1] == ",":
                         join = join[:-2]
@@ -284,21 +288,21 @@ class NER(object):
                         final = "When was "
                     else:
                         final = "When did "
-                    for token in end:
-                        if verb.lemma_ == "be" and token.lemma_ == "be":
-                            final = final
-                        elif verb.lemma_ != "be" and token == sent.root:
-                            final = final + sent.root.lemma_ + " "
-                        else:
-                            final = final + token.orth_ + " "
-                    when_question_1 = final[:-1] + "?"
-                    # when_question_1 = format_question(when_question_1)
-                    questions.append((when_question_1, rel))
-                    when1.append(when_question_1)
-                    when.append(when_question_1)
+                    if len(end) > 0 and (end[0].pos_ == "NOUN" or end[0].pos_ == "DET"):
+                        for token in end:
+                            if verb.lemma_ == "be" and token.lemma_ == "be":
+                                final = final
+                            elif verb.lemma_ != "be" and token == sent.root:
+                                final = final + sent.root.lemma_ + " "
+                            else:
+                                final = final + token.orth_ + " "
+                        when_question_1 = final[:-1] + "?"
+                        # when_question_1 = format_question(when_question_1)
+                        questions.append((when_question_1, rel))
+                        when1.append((when_question_1, verb.lemma_))
+                        when.append(when_question_1)
                     break
 
-            # TODO: check if noun after when did
             for i in range(0, len(sent)-1):
                 if (sent[i].ent_type_ == "DATE"):
                     if (i > 0):
@@ -318,23 +322,28 @@ class NER(object):
                             final = "When was "
                         else:
                             final = "When did "
-                        for token in front:
-                            if token.ent_type_ == "":
-                                final = final + token.lower_ + " "
-                            else:
-                                final = final + token.text + " "
-                        for token in end:
-                            if verb.lemma_ == "be" and token.lemma_ == "be":
-                                final = final
-                            elif verb.lemma_ != "be" and token == sent.root:
-                                final = final + sent.root.lemma_ + " "
-                            else:
-                                final = final + token.orth_ + " "
-                        when_question_2 = final[:-1] + "?"
-                        # when_question_2 = format_question(when_question_2)
-                        questions.append((when_question_2, rel))
-                        when2.append(when_question_2)
-                        when.append(when_question_2)
+                        if len(end) > 0 and (end[0].pos_ == "NOUN" or end[0].pos_ == "DET"):
+                            for token in front:
+                                if verb.lemma_ == "be" and token.lemma_ == "be":
+                                    final = final
+                                elif verb.lemma_ != "be" and token == sent.root:
+                                    final = final + sent.root.lemma_ + " "
+                                elif token == front[0] and token.ent_type_ == "":
+                                    final = final + token.lower_ + " "
+                                else:
+                                    final = final + token.orth_ + " "
+                            for token in end:
+                                if verb.lemma_ == "be" and token.lemma_ == "be":
+                                    final = final
+                                elif verb.lemma_ != "be" and token == sent.root:
+                                    final = final + sent.root.lemma_ + " "
+                                else:
+                                    final = final + token.orth_ + " "
+                            when_question_2 = final[:-1] + "?"
+                            # when_question_2 = format_question(when_question_2)
+                            questions.append((when_question_2, rel))
+                            when2.append((when_question_2, sent.root.text, verb.lemma_))
+                            when.append(when_question_2)
                     break
 
             # Where questions
@@ -436,7 +445,7 @@ class NER(object):
             print ""
 
         for q in when1:
-            sentence = q
+            sentence = q[0]
             matches = tool.check(sentence)
             if len(matches)==0:
                 print q
@@ -444,9 +453,9 @@ class NER(object):
             print ""
 
         for q in when2:
-            sentence = q
+            sentence = q[0]
             matches = tool.check(sentence)
-            if q.count(' ') > 3 and len(matches)==0:
+            if q[0].count(' ') > 3 and len(matches)==0:
                 print q
 
         for i in range(0,10):
