@@ -69,7 +69,7 @@ def two_verbs(i, sent, doc):
     if (i > 0):
         front = Span(doc, sent.start, i+sent.start-1)
         front_list = str(front).split()
-        if front[0].ent_type_ == "":
+        if len(front_list) > 0 and front[0].ent_type_ == "":
             front_list[0] = front_list[0].lower()
         str_front = " ".join(front_list)
     else:
@@ -95,8 +95,8 @@ def two_verbs(i, sent, doc):
         quest1 = sent[i-1].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
         quest2 = sent[i-1].orth_ + " " + str(front) + " " + sent[i].lemma_
 
-    quest1 += " " +str(end) + " ?"
-    quest2 += " " +str(end) + " ?"
+    quest1 += " " +str(end) + "?"
+    quest2 += " " +str(end) + "?"
     return quest1, quest2
 
 def one_verb(i, sent, doc):
@@ -107,7 +107,7 @@ def one_verb(i, sent, doc):
             front_list[0] = front_list[0].lower()
         str_front = " ".join(front_list)
     else:
-        font = []
+        front = []
     end = Span(doc, sent.start+i+1, sent.end-1)
 
     quest1 = ""
@@ -141,8 +141,8 @@ def one_verb(i, sent, doc):
         quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
         quest2 = sent[i].orth_ + " " + str(front) + " " + sent[i].lemma_
 
-    quest1 += " " + str(end) + " ?"
-    quest2 += " " + str(end) + " ?"
+    quest1 += " " + str(end) + "?"
+    quest2 += " " + str(end) + "?"
 
     return quest1, quest2
 
@@ -174,8 +174,13 @@ class NER(object):
         doc = nlp(unicode(txt))
 
         questions = []
+        what = []
+        when1 = []
+        when2 = []
         when = []
+        where = []
         who = []
+        do = []
         new = []
 
         words = []
@@ -195,6 +200,7 @@ class NER(object):
             if sent[0].text == "This":
                 remain = Span(doc, sent.start+1, sent.end-1)
                 questions.append(("What " + remain.text + "?", rel+10))
+                what.append("What " + remain.text + "?")
                 new.append(("What " + remain.text + "?", rel))
 
             # What questions
@@ -207,6 +213,7 @@ class NER(object):
                     # what_question_1 = format_question(what_question_1)
                     # questions.append((what_question_1, rel+gscore(what_question_1)))
                     questions.append((what_question_1, rel))
+                    what.append(what_question_1)
                     break
                 for r in sent.root.lefts:
                     join = ' '.join(w.text for w in r.subtree)
@@ -216,6 +223,7 @@ class NER(object):
                     # what_question_2 = format_question(what_question_2)
                     # questions.append((what_question_2, rel+gscore(what_question_2)))
                     questions.append((what_question_2, rel))
+                    what.append(what_question_2)
 
             # Who questions
             subject = ["he", "she"]
@@ -274,7 +282,8 @@ class NER(object):
                     when_question_1 = final[:-1] + "?"
                     # when_question_1 = format_question(when_question_1)
                     questions.append((when_question_1, rel))
-                    when.append((when_question_1, rel))
+                    when1.append(when_question_1)
+                    when.append(when_question_1)
                     break
 
             # TODO: check if noun after when did
@@ -312,7 +321,8 @@ class NER(object):
                         when_question_2 = final[:-1] + "?"
                         # when_question_2 = format_question(when_question_2)
                         questions.append((when_question_2, rel))
-                        when.append((when_question_2, rel))
+                        when2.append(when_question_2)
+                        when.append(when_question_2)
                     break
 
             # Where questions
@@ -344,6 +354,8 @@ class NER(object):
 
                     questions.append((where_question1, rel))
                     questions.append((where_question2, rel))
+                    where.append(where_question1)
+                    where.append(where_question2)
                     break
 
         # DO/ DID DOES HAVE WAS IS questions
@@ -359,6 +371,8 @@ class NER(object):
 
                     questions.append((vquest1, rel))
                     questions.append((vquest2, rel))
+                    do.append(vquest1)
+                    do.append(vquest2)
                     break
 
                 elif sent[i] == sent.root:
@@ -369,6 +383,8 @@ class NER(object):
 
                     questions.append((vquest1, rel))
                     questions.append((vquest2, rel))
+                    do.append(vquest1)
+                    do.append(vquest2)
                     break
 
         pronouns = ["he","He", "she", "his", "her"]
@@ -404,4 +420,62 @@ class NER(object):
                     count = count+1
                     print goodPronouns[j*4+i]
 
+        for i in range(0,10):
+            print ""
+
+        for q in when1:
+            sentence = q
+            matches = tool.check(sentence)
+            if len(matches)==0:
+                print q
+        for i in range(0,10):
+            print ""
+
+        for q in when2:
+            sentence = q
+            matches = tool.check(sentence)
+            if q.count(' ') > 3 and len(matches)==0:
+                print q
+
+        for i in range(0,10):
+            print "WHAT"
+
+        for q in what:
+            sentence = q
+            matches = tool.check(sentence)
+            if q.count(' ') > 3 and len(matches)==0:
+                print q
+
+        for i in range(0,10):
+            print "WHEN"
+
+        for q in when:
+            sentence = q
+            matches = tool.check(sentence)
+            if q.count(' ') > 3 and len(matches)==0:
+                print q
+        for i in range(0,10):
+            print "WHERE"
+
+        for q in where:
+            sentence = q
+            matches = tool.check(sentence)
+            if q.count(' ') > 3 and len(matches)==0:
+                print q
+        for i in range(0,10):
+            print "WHO"
+
+        for q in who:
+            sentence = q
+            matches = tool.check(sentence)
+            if q.count(' ') > 3 and len(matches)==0:
+                print q
+        for i in range(0,10):
+            print "DO"
+
+        for q in do:
+            sentence = q
+            matches = tool.check(sentence)
+            if q.count(' ') > 3 and len(matches)==0:
+                print q
 txt = NER(textFile)
