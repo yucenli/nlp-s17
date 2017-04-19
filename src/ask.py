@@ -206,7 +206,13 @@ class NER(object):
             # What questions
             if (sent.root.lemma_ == "be"):
                 for r in sent.root.rights:
-                    join = ' '.join(w.text for w in r.subtree)
+                    join = ""
+                    #join = ' '.join(w.text for w in r.subtree)
+                    for w in r.subtree:
+                        if w.ent_type_ == "":
+                            join += ' ' + w.lower_
+                        else:
+                            join += ' ' + w.text
                     if join[-1] == ",":
                         join = join[:-2]
                     what_question_1 = "What " + sent.root.text + " " + join + "?"
@@ -216,7 +222,13 @@ class NER(object):
                     what.append(what_question_1)
                     break
                 for r in sent.root.lefts:
-                    join = ' '.join(w.text for w in r.subtree)
+                    join = ""
+                    #join = ' '.join(w.text for w in r.subtree)
+                    for w in r.subtree:
+                        if w.ent_type_ == "":
+                            join += ' ' + w.lower_
+                        else:
+                            join += ' ' + w.text
                     if join[-1] == ",":
                         join = join[:-2]
                     what_question_2 = "What " + sent.root.text + " " + join + "?"
