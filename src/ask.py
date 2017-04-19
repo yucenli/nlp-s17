@@ -415,8 +415,15 @@ class NER(object):
         for q in questions:
             if (q[0].count(' ') > 3):
                 sentence = q[0]
-                matches = tool.check(sentence)
-                if len(matches)==0:
+                try:
+                    matches = tool.check(sentence)
+                    if len(matches)==0:
+                        words = q[0].split()
+                        if not any(p == w for w in words for p in pronouns):
+                            goodQuestions.append(sentence)
+                        else:
+                            goodPronouns.append(sentence)
+                except:
                     words = q[0].split()
                     if not any(p == w for w in words for p in pronouns):
                         goodQuestions.append(sentence)
@@ -441,6 +448,7 @@ class NER(object):
                     count = count+1
                     print goodPronouns[j*4+i]
 
+        # DEBUG STUFF
         for i in range(0,10):
             print ""
 
