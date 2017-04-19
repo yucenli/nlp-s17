@@ -34,7 +34,6 @@ def removeParentheses(sentence):
 
 def find_subject(sent):
     np_lab1 = ['nsubj', 'nsubjpass']
-    np_lab2 = ['dobj', 'iobj', 'pobj']
     subject = ""
     for i in range(0, len(sent)-1):
         if sent[i].dep_ == 'nsubj' and sent[i].head.dep_ == "ROOT":
@@ -47,16 +46,6 @@ def find_subject(sent):
             if sent[i].pos == "PRON":
                 subject = subject.lower()
             break
-        # elif sent[i].dep_ in np_lab1:
-        #     subject = sent[i].orth_
-        #     if sent[i].pos == "PRON":
-        #         subject = subject.lower()
-        #     break
-        # elif sent[i].dep_ in np_lab2:
-        #     subject = sent[i].orth_
-        #     if sent[i].pos == "PRON":
-        #         subject = subject.lower()
-        #     break
     if subject == "":
         subject = "UNKNOWN"
     print("     SUBJECT: " + subject)
@@ -75,6 +64,8 @@ def two_verbs(i, sent, doc):
         if front[0].ent_type_ == "":
             if len(front_list) != 0:
                 front_list[0] = front_list[0].lower()
+        if len(front_list) > 0 and front[0].ent_type_ == "":
+            front_list[0] = front_list[0].lower()
         str_front = " ".join(front_list)
     end = Span(doc, sent.start + i +1, sent.end-1)
 
@@ -103,6 +94,8 @@ def two_verbs(i, sent, doc):
     print("     QUESTION 1: " + quest1)
     print("     QUESTION 2: " + quest2)
 
+    quest1 += " " +str(end) + "?"
+    quest2 += " " +str(end) + "?"
     return quest1, quest2
 
 def one_verb(i, sent, doc):
@@ -115,6 +108,8 @@ def one_verb(i, sent, doc):
             if len(front_list) != 0:
                 front_list[0] = front_list[0].lower()
         str_front = " ".join(front_list)
+    else:
+        front = []
     end = Span(doc, sent.start+i+1, sent.end-1)
 
     quest1 = ""
@@ -148,8 +143,8 @@ def one_verb(i, sent, doc):
         quest1 = sent[i].orth_ + " " + find_subject(sent) + " " + sent[i].lemma_
         quest2 = sent[i].orth_ + " " + str_front + " " + sent[i].lemma_
 
-    quest1 += " " + str(end) + " ?"
-    quest2 += " " + str(end) + " ?"
+    quest1 += " " + str(end) + "?"
+    quest2 += " " + str(end) + "?"
 
     print("     QUESTION 1: " + quest1)
     print("     QUESTION 2: " + quest2)
@@ -184,8 +179,13 @@ class ASK(object):
         doc = nlp(unicode(txt))
 
         questions = []
+        what = []
+        when1 = []
+        when2 = []
         when = []
+        where = []
         who = []
+        do = []
         new = []
 
         words = []
@@ -202,159 +202,187 @@ class ASK(object):
 
             rel = rel/float(len(sent))
 
-            # if sent[0].text == "This":
-            #     remain = Span(doc, sent.start+1, sent.end-1)
-            #     questions.append(("What " + remain.text + "?", rel+10))
-            #     new.append(("What " + remain.text + "?", rel))
+            if sent[0].text == "This":
+                remain = Span(doc, sent.start+1, sent.end-1)
+                questions.append(("What " + remain.text + "?", rel+10))
+                what.append("What " + remain.text + "?")
+                new.append(("What " + remain.text + "?", rel))
 
-            # # What questions
-            # if (sent.root.lemma_ == "be"):
-            #     for r in sent.root.rights:
-            #         join = ' '.join(w.text for w in r.subtree)
-            #         if join[-1] == ",":
-            #             join = join[:-2]
-            #         what_question_1 = "What " + sent.root.text + " " + join + "?"
-            #         # what_question_1 = format_question(what_question_1)
-            #         # questions.append((what_question_1, rel+gscore(what_question_1)))
-            #         questions.append((what_question_1, rel))
-            #         break
-            #     for r in sent.root.lefts:
-            #         join = ' '.join(w.text for w in r.subtree)
-            #         if join[-1] == ",":
-            #             join = join[:-2]
-            #         what_question_2 = "What " + sent.root.text + " " + join + "?"
-            #         # what_question_2 = format_question(what_question_2)
-            #         # questions.append((what_question_2, rel+gscore(what_question_2)))
-            #         questions.append((what_question_2, rel))
+            # What questions
+            if (sent.root.lemma_ == "be"):
+                for r in sent.root.rights:
+                    join = ""
+                    #join = ' '.join(w.text for w in r.subtree)
+                    first = True
+                    for w in r.subtree:
+                        if first and w.ent_type_ == "":
+                            join += ' ' + w.lower_
+                        else:
+                            first = False
+                            join += ' ' + w.text
+                    if join[-1] == ",":
+                        join = join[:-2]
+                    what_question_1 = "What " + sent.root.text + " " + join + "?"
+                    # what_question_1 = format_question(what_question_1)
+                    # questions.append((what_question_1, rel+gscore(what_question_1)))
+                    questions.append((what_question_1, rel))
+                    what.append(what_question_1)
+                    break
+                for r in sent.root.lefts:
+                    join = ""
+                    #join = ' '.join(w.text for w in r.subtree)
+                    first = True
+                    for w in r.subtree:
+                        if first and w.ent_type_ == "":
+                            join += ' ' + w.lower_
+                        else:
+                            first = False
+                            join += ' ' + w.text
+                    if join[-1] == ",":
+                        join = join[:-2]
+                    what_question_2 = "What " + sent.root.text + " " + join + "?"
+                    # what_question_2 = format_question(what_question_2)
+                    # questions.append((what_question_2, rel+gscore(what_question_2)))
+                    questions.append((what_question_2, rel))
+                    what.append(what_question_2)
 
-            # # Who questions
-            # subject = ["he", "she"]
-            # for i in range(0, len(sent)-1) :
-            #     if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
-            #         if i > 0:
-            #             start = Span(doc, sent.start, i+sent.start-1)
-            #         else:
-            #             start = Span(doc, sent.start, sent.start)
-            #         i = i+1
-            #         while i < len(sent)-1:
-            #             if sent[i].ent_type_ == "PERSON":
-            #                 i = i+1
-            #             elif sent[i].dep_ == "nsubj":
-            #                 i = i+1
-            #             else:
-            #                 break
-            #         end = Span(doc, i + sent.start, sent.end-1)
-            #         if (len(start) == 0):
-            #             who_question = "Who " + end.text + "?"
-            #             # who_question = format_question(who_question)
-            #             # questions.append((who_question, rel+gscore(who_question)))
-            #             questions.append((who_question, rel))
-            #             who.append(who_question)
-            #         else:
-            #             who_question = "Who " + end.text + "?"
-            #             # who_question = format_question(who_question)
-            #             # questions.append((who_question, rel+gscore(who_question)))
-            #             questions.append((who_question, rel))
-            #             who.append(who_question)
-            #         break
+            # Who questions
+            subject = ["he", "she"]
+            for i in range(0, len(sent)-1) :
+                if sent[i].dep_ == "nsubj" and sent[i].ent_type_ == "PERSON" or sent[i].text in subject:
+                    if i > 0:
+                        start = Span(doc, sent.start, i+sent.start-1)
+                    else:
+                        start = Span(doc, sent.start, sent.start)
+                    i = i+1
+                    while i < len(sent)-1:
+                        if sent[i].ent_type_ == "PERSON":
+                            i = i+1
+                        elif sent[i].dep_ == "nsubj":
+                            i = i+1
+                        else:
+                            break
+                    end = Span(doc, i + sent.start, sent.end-1)
+                    if (len(start) == 0):
+                        who_question = "Who " + end.text + "?"
+                        # who_question = format_question(who_question)
+                        # questions.append((who_question, rel+gscore(who_question)))
+                        questions.append((who_question, rel))
+                        who.append(who_question)
+                    else:
+                        who_question = "Who " + end.text + "?"
+                        # who_question = format_question(who_question)
+                        # questions.append((who_question, rel+gscore(who_question)))
+                        questions.append((who_question, rel))
+                        who.append(who_question)
+                    break
 
-            # # When questions
-            # # Only works when original sentence is "In ____, blah blah."
-            # for i in range(0, len(sent)-1):
-            #     if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"):
-            #         hi = Span(doc, sent.start, i+sent.start)
-            #         head = sent[i].head
-            #         while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
-            #             i = i+1
-            #         end = Span(doc, i + sent.start, sent.end-1)
-            #         verb = sent[i]
-            #         for t in sent.root.lefts:
-            #             verb = t
-            #         if verb.lemma_ == "be":
-            #             final = "When was "
-            #         else:
-            #             final = "When did "
-            #         for token in end:
-            #             if verb.lemma_ == "be" and token.lemma_ == "be":
-            #                 final = final
-            #             elif verb.lemma_ != "be" and token == sent.root:
-            #                 final = final + sent.root.lemma_ + " "
-            #             else:
-            #                 final = final + token.orth_ + " "
-            #         when_question_1 = final[:-1] + "?"
-            #         # when_question_1 = format_question(when_question_1)
-            #         questions.append((when_question_1, rel))
-            #         when.append((when_question_1, rel))
-            #         break
+            # When questions
+            # Only works when original sentence is "In ____, blah blah."
+            for i in range(0, len(sent)-1):
+                if (sent[i].ent_type_ == "DATE" and sent[i].pos_ != "ADJ"):
+                    hi = Span(doc, sent.start, i+sent.start)
+                    head = sent[i].head
+                    while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
+                        i = i+1
+                    end = Span(doc, i + sent.start, sent.end-1)
+                    verb = sent[i]
+                    for t in sent.root.lefts:
+                        verb = t
+                    if verb.lemma_ == "be":
+                        final = "When was "
+                    else:
+                        final = "When did "
+                    if len(end) > 0 and (end[0].pos_ == "NOUN" or end[0].pos_ == "DET"):
+                        for token in end:
+                            if verb.lemma_ == "be" and token.lemma_ == "be":
+                                final = final
+                            elif verb.lemma_ != "be" and token == sent.root:
+                                final = final + sent.root.lemma_ + " "
+                            else:
+                                final = final + token.orth_ + " "
+                        when_question_1 = final[:-1] + "?"
+                        # when_question_1 = format_question(when_question_1)
+                        questions.append((when_question_1, rel))
+                        when1.append((when_question_1, verb.lemma_))
+                        when.append(when_question_1)
+                    break
 
-            # # TODO: check if noun after when did
-            # for i in range(0, len(sent)-1):
-            #     if (sent[i].ent_type_ == "DATE"):
-            #         if (i > 0):
-            #             front = Span(doc, sent.start, i+sent.start-1)
-            #         else:
-            #             font = []
-            #         valid = False
-            #         while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
-            #             i = i+1
-            #             valid = True
-            #         if valid:
-            #             end = Span(doc, sent.start + i, sent.end-1)
-            #             verb = sent[i]
-            #             for t in sent.root.lefts:
-            #                 verb = t
-            #             if verb.lemma_ == "be":
-            #                 final = "When was "
-            #             else:
-            #                 final = "When did "
-            #             for token in front:
-            #                 if token.ent_type_ == "":
-            #                     final = final + token.lower_ + " "
-            #                 else:
-            #                     final = final + token.text + " "
-            #             for token in end:
-            #                 if verb.lemma_ == "be" and token.lemma_ == "be":
-            #                     final = final
-            #                 elif verb.lemma_ != "be":
-            #                     final = final + sent.root.lemma_ + " "
-            #                 else:
-            #                     final = final + token.orth_ + " "
-            #             when_question_2 = final[:-1] + "?"
-            #             # when_question_2 = format_question(when_question_2)
-            #             questions.append((when_question_2, rel))
-            #             when.append((when_question_2, rel))
-            #         break
+            for i in range(0, len(sent)-1):
+                if (sent[i].ent_type_ == "DATE"):
+                    if (i > 0):
+                        front = Span(doc, sent.start, i+sent.start-1)
+                    else:
+                        font = []
+                    valid = False
+                    while i < len(sent) - 1 and (sent[i].ent_type_ == "DATE" or sent[i].pos_ == "PUNCT"):
+                        i = i+1
+                        valid = True
+                    if valid:
+                        end = Span(doc, sent.start + i, sent.end-1)
+                        verb = sent[i]
+                        for t in sent.root.lefts:
+                            verb = t
+                        if verb.lemma_ == "be":
+                            final = "When was "
+                        else:
+                            final = "When did "
+                        if len(end) > 0 and (end[0].pos_ == "NOUN" or end[0].pos_ == "DET"):
+                            for token in front:
+                                if verb.lemma_ == "be" and token.lemma_ == "be":
+                                    final = final
+                                elif verb.lemma_ != "be" and token == sent.root:
+                                    final = final + sent.root.lemma_ + " "
+                                elif token == front[0] and token.ent_type_ == "":
+                                    final = final + token.lower_ + " "
+                                else:
+                                    final = final + token.orth_ + " "
+                            for token in end:
+                                if verb.lemma_ == "be" and token.lemma_ == "be":
+                                    final = final
+                                elif verb.lemma_ != "be" and token == sent.root:
+                                    final = final + sent.root.lemma_ + " "
+                                else:
+                                    final = final + token.orth_ + " "
+                            when_question_2 = final[:-1] + "?"
+                            # when_question_2 = format_question(when_question_2)
+                            questions.append((when_question_2, rel))
+                            when2.append((when_question_2, sent.root.text, verb.lemma_))
+                            when.append(when_question_2)
+                    break
 
-            # # Where questions
-            # wheretag = ["GPE", "LOC", "FACILTY", "ORG"]
-            # for i in range(0, len(sent)-1):
-            #     if (sent[i].ent_type_ in wheretag) and (sent[i-1].ent_type_ not in wheretag) and (sent[i-1].tag_ == "IN"):
+            # Where questions
+            wheretag = ["GPE", "LOC", "FACILTY", "ORG"]
+            for i in range(0, len(sent)-1):
+                if (sent[i].ent_type_ in wheretag) and (sent[i-1].ent_type_ not in wheretag) and (sent[i-1].tag_ == "IN"):
 
-            #         oneloc =  " " + str(sent[i-1])+ " " + str(sent[i])
-            #         j = i
-            #         while j < len(sent)-1 and sent[j+1].ent_type_ in wheretag:
-            #             oneloc += " " + str(sent[j+1])
-            #             j = j + 1
-            #         i = j
+                    oneloc =  " " + str(sent[i-1])+ " " + str(sent[i])
+                    j = i
+                    while j < len(sent)-1 and sent[j+1].ent_type_ in wheretag:
+                        oneloc += " " + str(sent[j+1])
+                        j = j + 1
+                    i = j
 
-            #         where_question1 = ""
-            #         where_question2 = ""
+                    where_question1 = ""
+                    where_question2 = ""
 
-            #         for k in range(0, len(sent)-1):
-            #             if sent[k] == sent.root and (sent[k-1].pos_ == 'VERB'):
-            #                 where_question1 = "Where" + " " + two_verbs(k, sent, doc)[0]
-            #                 where_question2 = "Where" + " " + two_verbs(k, sent, doc)[1]
+                    for k in range(0, len(sent)-1):
+                        if sent[k] == sent.root and (sent[k-1].pos_ == 'VERB'):
+                            where_question1 = "Where" + " " + two_verbs(k, sent, doc)[0]
+                            where_question2 = "Where" + " " + two_verbs(k, sent, doc)[1]
 
-            #             elif sent[k] == sent.root:
-            #                 where_question1 = "Where" + " " + one_verb(k, sent, doc)[0]
-            #                 where_question2 = "Where" + " " + one_verb(k, sent, doc)[1]
+                        elif sent[k] == sent.root:
+                            where_question1 = "Where" + " " + one_verb(k, sent, doc)[0]
+                            where_question2 = "Where" + " " + one_verb(k, sent, doc)[1]
 
-            #         where_question1 = where_question1.replace(oneloc, "")
-            #         where_question2 = where_question2.replace(oneloc, "")
+                    where_question1 = where_question1.replace(oneloc, "")
+                    where_question2 = where_question2.replace(oneloc, "")
 
-            #         questions.append((where_question1, rel))
-            #         questions.append((where_question2, rel))
-            #         break
+                    questions.append((where_question1, rel))
+                    questions.append((where_question2, rel))
+                    where.append(where_question1)
+                    where.append(where_question2)
+                    break
 
         # DO/ DID DOES HAVE WAS IS questions
             for i in range(0, len(sent)-1):
@@ -368,6 +396,8 @@ class ASK(object):
 
                     questions.append((vquest1, rel))
                     questions.append((vquest2, rel))
+                    do.append(vquest1)
+                    do.append(vquest2)
                     break
 
                 elif sent[i] == sent.root:
@@ -377,6 +407,8 @@ class ASK(object):
 
                     questions.append((vquest1, rel))
                     questions.append((vquest2, rel))
+                    do.append(vquest1)
+                    do.append(vquest2)
                     break
 
         pronouns = ["he","He", "she", "his", "her", "it"]
