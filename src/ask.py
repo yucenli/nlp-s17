@@ -160,7 +160,7 @@ def one_verb(i, sent, doc):
 class ASK(object):
 
     def __init__(self, txt_path):
-        super(NER, self).__init__()
+        super(ASK, self).__init__()
 
         cur_path = os.path.dirname(__file__)
         rel_path = '../data/' + txt_path
