@@ -1,18 +1,14 @@
 import spacy
 from spacy.tokens.span import Span
-# from nltk.parse.stanford import StanfordParser
 import os
 import re
 import sys
-# import string
 from collections import Counter
-# import language_check
 import grammar_check
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 tool = grammar_check.LanguageTool('en-US')
-# tool = language_check.LanguageTool('en-US')
 
 textFile = sys.argv[1]
 qNum = int(sys.argv[2])
@@ -50,10 +46,6 @@ def find_subject(sent):
         subject = "UNKNOWN"
 
     return subject
-
-def format_question(question):
-    matches = tool.check(unicode(question))
-    return grammar_check.correct(unicode(question), matches)
 
 def two_verbs(i, sent, doc):
     front = ""
@@ -153,9 +145,6 @@ def one_verb(i, sent, doc):
     quest2 += " " + str(end) + "?"
 
     return quest1, quest2
-
-# def gscore(question):
-#     return float(-len(tool.check(unicode(question))))
 
 class ASK(object):
 
