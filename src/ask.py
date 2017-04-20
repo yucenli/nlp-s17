@@ -157,7 +157,7 @@ def one_verb(i, sent, doc):
 # def gscore(question):
 #     return float(-len(tool.check(unicode(question))))
 
-class NER(object):
+class ASK(object):
 
     def __init__(self, txt_path):
         super(NER, self).__init__()
@@ -457,4 +457,4 @@ class NER(object):
                     count = count+1
                     print goodPronouns[j*4+i]
 
-txt = NER(textFile)
+txt = ASK(textFile)
