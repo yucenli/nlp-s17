@@ -175,7 +175,7 @@ class ASK(object):
         sentence_regex = "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
         regex = re.compile(sentence_regex)
 
-        txt = [x for x in txt if regex.search(x)]
+        txt = [removeParentheses(x) for x in txt if regex.search(x)]
         txt = ''.join(str(elem) for elem in txt)
         self.txt = txt
         nlp = spacy.load('en')
