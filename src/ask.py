@@ -182,14 +182,6 @@ class ASK(object):
         doc = nlp(unicode(txt))
 
         questions = []
-        what = []
-        when1 = []
-        when2 = []
-        when = []
-        where = []
-        who = []
-        do = []
-        new = []
 
         words = []
         for word in doc:
@@ -208,14 +200,11 @@ class ASK(object):
             if sent[0].text == "This":
                 remain = Span(doc, sent.start+1, sent.end-1)
                 questions.append(("What " + remain.text + "?", rel+10))
-                what.append("What " + remain.text + "?")
-                new.append(("What " + remain.text + "?", rel))
 
             # What questions
             if (sent.root.lemma_ == "be"):
                 for r in sent.root.rights:
                     join = ""
-                    #join = ' '.join(w.text for w in r.subtree)
                     first = True
                     for w in r.subtree:
                         if first and w.ent_type_ == "":
@@ -226,14 +215,10 @@ class ASK(object):
                     if join[-1] == ",":
                         join = join[:-2]
                     what_question_1 = "What " + sent.root.text + " " + join + "?"
-                    # what_question_1 = format_question(what_question_1)
-                    # questions.append((what_question_1, rel+gscore(what_question_1)))
                     questions.append((what_question_1, rel))
-                    what.append(what_question_1)
                     break
                 for r in sent.root.lefts:
                     join = ""
-                    #join = ' '.join(w.text for w in r.subtree)
                     first = True
                     for w in r.subtree:
                         if first and w.ent_type_ == "":
@@ -244,10 +229,7 @@ class ASK(object):
                     if join[-1] == ",":
                         join = join[:-2]
                     what_question_2 = "What " + sent.root.text + " " + join + "?"
-                    # what_question_2 = format_question(what_question_2)
-                    # questions.append((what_question_2, rel+gscore(what_question_2)))
                     questions.append((what_question_2, rel))
-                    what.append(what_question_2)
 
             # Who questions
             subject = ["he", "she"]
@@ -268,16 +250,10 @@ class ASK(object):
                     end = Span(doc, i + sent.start, sent.end-1)
                     if (len(start) == 0):
                         who_question = "Who " + end.text + "?"
-                        # who_question = format_question(who_question)
-                        # questions.append((who_question, rel+gscore(who_question)))
                         questions.append((who_question, rel))
-                        who.append(who_question)
                     else:
                         who_question = "Who " + end.text + "?"
-                        # who_question = format_question(who_question)
-                        # questions.append((who_question, rel+gscore(who_question)))
                         questions.append((who_question, rel))
-                        who.append(who_question)
                     break
 
             # When questions
@@ -305,10 +281,7 @@ class ASK(object):
                             else:
                                 final = final + token.orth_ + " "
                         when_question_1 = final[:-1] + "?"
-                        # when_question_1 = format_question(when_question_1)
                         questions.append((when_question_1, rel))
-                        when1.append((when_question_1, verb.lemma_))
-                        when.append(when_question_1)
                     break
 
             for i in range(0, len(sent)-1):
@@ -348,10 +321,7 @@ class ASK(object):
                                 else:
                                     final = final + token.orth_ + " "
                             when_question_2 = final[:-1] + "?"
-                            # when_question_2 = format_question(when_question_2)
                             questions.append((when_question_2, rel))
-                            when2.append((when_question_2, sent.root.text, verb.lemma_))
-                            when.append(when_question_2)
                     break
 
             # Where questions
@@ -380,11 +350,8 @@ class ASK(object):
 
                     where_question1 = where_question1.replace(oneloc, "")
                     where_question2 = where_question2.replace(oneloc, "")
-
                     questions.append((where_question1, rel))
                     questions.append((where_question2, rel))
-                    where.append(where_question1)
-                    where.append(where_question2)
                     break
 
         # DO/ DID DOES HAVE WAS IS questions
@@ -400,8 +367,6 @@ class ASK(object):
 
                     questions.append((vquest1, rel))
                     questions.append((vquest2, rel))
-                    do.append(vquest1)
-                    do.append(vquest2)
                     break
 
                 elif sent[i] == sent.root:
@@ -412,8 +377,6 @@ class ASK(object):
 
                     questions.append((vquest1, rel))
                     questions.append((vquest2, rel))
-                    do.append(vquest1)
-                    do.append(vquest2)
                     break
 
         pronouns = ["he", "she", "his", "her"]
@@ -439,12 +402,6 @@ class ASK(object):
                         goodPronouns.append(sentence)
 
         count = 0
-        new = sorted(new, key=lambda x: x[1], reverse=True)
-        for i in range(0, len(new)):
-            if count < i:
-                count = count+1
-                print new[i][0]
-
         for i in range(0, 4):
             for j in range(0, len(goodQuestions)/4):
                 if count < qNum:
