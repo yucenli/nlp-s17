@@ -416,7 +416,7 @@ class NER(object):
                     do.append(vquest2)
                     break
 
-        pronouns = ["he","He", "she", "his", "her"]
+        pronouns = ["he", "she", "his", "her"]
         questions = sorted(questions, key=lambda x: x[1], reverse=True)
         goodQuestions = []
         goodPronouns = []
