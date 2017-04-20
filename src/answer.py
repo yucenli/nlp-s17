@@ -64,9 +64,7 @@ class NER(object):
     def __init__(self, txt_path, q_root):
         super(NER, self).__init__()
 
-        cur_path = os.path.dirname(__file__)
-        rel_path = '../data/' + txt_path
-        f_path = os.path.join(cur_path, rel_path)
+        f_path = txt_path 
         with open(f_path, 'r') as f:
             txt = f.readlines()
 
